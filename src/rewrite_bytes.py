@@ -1,6 +1,8 @@
 import json
 from collections import defaultdict
-
+import argparse
+import os
+from tqdm import tqdm
 
 class ByteRewriter:
 
@@ -74,9 +76,49 @@ class ByteRewriter:
 
 		return out_bytes
 
-if __name__ == "__main__":
-	rewriter = ByteRewriter("../byte_maps/simple_decompose.json")
-	#print(rewriter.rewrite_bytes("68 65 6c 6c 6f 20 77 6f 72 6c 64".split(' ')))
 
-	rewriter = ByteRewriter("../byte_maps/simple_merge.json")
-	print(rewriter.rewrite_bytes("74 6f 6b".split(' ')))
+if __name__ == "__main__":
+
+	parser = argparse.ArgumentParser(description="Rewrite bytes")
+	parser.add_argument("--byte_map_dir", default="../byte_maps")
+	parser.add_argument("--input_dir", default="../morfessor_in")
+	parser.add_argument("--output_dir", default="../rewriten")
+	parser.add_argument("--languages", nargs="+", default=["eng_Latn", "spa_Latn", "por_Latn", "fra_Latn", "ita_Latn",
+	                                                       "ron_Latn", "pol_Latn", "mlt_Latn", "heb_Hebr", "arb_Arab",
+	                                                       "jpn_Jpan", "kor_Hang", "tel_Telu", "tam_Taml", "bod_Tibt",
+	                                                       "sin_Sinh"])
+	parser.add_argument("--split", default="devtest")
+	parser.add_argument("--bp", default=48)
+	parser.add_argument("--ml", default=0)
+	parser.add_argument("--mtn", default=4096)
+	parser.add_argument("--reverse", action="store_true", default=False)
+
+	args = parser.parse_args()
+
+	# byte map loading file
+	byte_map_file = f"{args.byte_map_dir}/morfessor_bp_{args.bp}_ml_{args.ml}_mtn_{args.mtn}.json"
+	rewriter = ByteRewriter(byte_map_file)
+
+	for lang in args.languages:
+		# open input corpus file
+		corpus_file = f"{args.input_dir}/{lang}/corpus_{args.split}.txt"
+		in_lines_bytes = 0.
+		out_lines_bytes = 0.
+		out_lines = []
+		with open(corpus_file, "r") as f:
+			in_lines = f.readlines()
+
+		for line in tqdm(in_lines, desc= f"Processing {args.split} corpus in {lang}"):
+			in_hex = line.strip().split('-')
+			in_lines_bytes += len(in_hex)
+			out_hex = rewriter.rewrite_bytes(in_hex, reverse=args.reverse)
+			out_lines_bytes += len(out_hex)
+			out_lines.append("-".join(out_hex) + '\n')
+
+		print(f"Language: {lang} rewritten from {in_lines_bytes/len(in_lines)} to {out_lines_bytes/len(out_lines)} bytes")
+
+		# open output corpus file
+		os.makedirs(f"{args.output_dir}/{lang}", exist_ok=True)
+		out_corpus_file = f"{args.output_dir}/{lang}/corpus_{args.split}.txt"
+		with open(out_corpus_file, "w") as f:
+			f.writelines(out_lines)
