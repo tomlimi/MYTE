@@ -3,16 +3,19 @@ from collections import defaultdict
 import argparse
 import os
 from tqdm import tqdm
+from typing import Union
 
 class ByteRewriter:
 
 	LEAF ='[LEAF]'
 
-	def __init__(self, rewritting_rules_file):
+	def __init__(self, rewriting_rules: Union[str, dict[str, str]]):
 
-		rewriting_rules = {}
-		with open(rewritting_rules_file, "r") as f:
-			rewriting_rules = json.load(f)
+		if type(rewriting_rules) == str:
+			with open(rewriting_rules, "r") as f:
+				rewriting_rules = json.load(f)
+		elif not type(rewriting_rules) == dict:
+			raise ValueError(f"rewriting_rules should be either a path to json file or a dict, got {type(rewriting_rules)}")
 
 		self.hash_tree = self.construct_hash_tree(rewriting_rules)
 		revese_revrewriting_rules = {v:k for k,v in rewriting_rules.items()}
