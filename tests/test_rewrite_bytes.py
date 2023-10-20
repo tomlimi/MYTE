@@ -40,6 +40,13 @@ class TestByteRewriterDecompose(unittest.TestCase):
 
 		self.assertEqual(self.rewriter.rewrite_bytes(in_hex), out_hex)
 
+	def test_unrecognized_byte(self):
+		rewriter = ByteRewriter("../byte_maps/simple_decompose.json")
+		in_hex = ['00', '01', 'xx', '03', '61']
+		out_hex = ['00', '01', 'xx', '03', '61']
+
+		self.assertEqual(rewriter.rewrite_bytes(in_hex), out_hex)
+
 
 class TestByteRewriterMerge(unittest.TestCase):
 
