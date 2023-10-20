@@ -4,6 +4,7 @@ import argparse
 import os
 from tqdm import tqdm
 from typing import Union
+import logging
 
 class ByteRewriter:
 
@@ -37,7 +38,7 @@ class ByteRewriter:
 	def construct_hash_tree(self, rewritting_rules):
 
 		hash_tree = defaultdict(dict)
-		for b in (hex(x)[2:] for x in range(256)):
+		for b in (f"{x:02x}" for x in range(256)):
 			hash_tree[b][self.LEAF] = [b]
 
 		for in_seequence, out_sequence in rewritting_rules.items():
@@ -69,6 +70,11 @@ class ByteRewriter:
 				b = in_bytes[j]
 				if b in tree_pointer:
 					tree_pointer = tree_pointer[b]
+				elif j == b_start:
+					logging.warning(f"Unrecognized byte {b} in {in_bytes}, Skipping!")
+					cur_leaf = [b]
+					b_end = j
+					break
 				else:
 					break
 				if self.LEAF in tree_pointer:

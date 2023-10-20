@@ -94,7 +94,7 @@ if __name__ == "__main__":
 	argparser.add_argument("--pre_processing_file", help="file with processing parameters", default="../byte_maps/decompose.json")
 	argparser.add_argument("--do_capitalize", help="if capitalize lexemes", action='store_true', default=False)
 	argparser.add_argument("--no_lexicon", help="do not save lexicon", action="store_true", default=False)
-	argparser.add_argument("--min_occurances", help="minimum occuracnes for a lexeme", default=2, type=int)
+	argparser.add_argument("--min_occurances", help="minimum occuracnes for a lexeme", default=0, type=int)
 	argparser.add_argument("--lexicon_size", help="Pre-set lexicon size", default=50000, type=int)
 
 	args = argparser.parse_args()
