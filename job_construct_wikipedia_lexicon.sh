@@ -1,30 +1,28 @@
 #! /bin/bash
 #SBATCH --job-name=construct-wiki-lexicon
-#SBATCH --output=construct-wiki-lexicon-%x-%A-%a.log
-#SBATCH --error=construct-wiki-lexicon-%x-%A-%a.log
+#SBATCH --output=slurm_output/construct-wiki-lexicon-%A-%a.log
+#SBATCH --error=slurm_output/construct-wiki-lexicon-%A-%a.log
 #SBATCH --account=zlab
-#SBATCH --time=12:59:00
+#SBATCH --partition=gpu-rtx6k
+#SBATCH --time=23:59:00
 #SBATCH --ntasks=1
-#SBATCH --c 5
-#SBATCH --mem=32G
-#SBATCH --workdir /usr/lusers/tomlim/my_gscratch/mseg/fair_segmentation/src
+#SBATCH -c 2
+#SBATCH --mem=16G
 
+cd /gscratch/zlab/tomlim/mseg/fair_segmentation/src || exit 
 source ../../mseg/bin/activate
 
 
 shopt -s nullglob
 
 LANGUAGES=('en' 'es' 'pt' 'fr' 'it' 'ro' 'pl' 'mt' 'he' 'ar' 'ja' 'ko' 'te' 'ta' 'bo' 'si')
-LATN_LANGUAGES=('en' 'es' 'pt' 'fr' 'it' 'ro' 'pl' 'mt')
-LANG=${LANGUGES[$SLURM_ARRAY_TASK_ID]}
-IF_LATN=(( $SLURM_ARRAY_TASK_ID <= ${#LATN_LANGUAGES[@]} ))
+LANGUAGES=('af' 'am' 'az' 'be' 'bg' 'bn' 'ca' 'ceb' 'co' 'cs' 'cy' 'da' 'de' 'el' 'eo' 'et' 'eu' 'fa' 'fi' 'fy' 'ga' 'gd' 'gl' 'gu' 'ha' 'haw' 'hi' 'hmn' 'ht' 'hu' 'hy' 'id' 'ig' 'is' 'iw' 'jv' 'ka' 'kk' 'km' 'kn' 'ku' 'ky' 'la' 'lb' 'lo' 'lt' 'lv' 'mg' 'mi' 'mk' 'ml' 'mn' 'mr' 'ms' 'my' 'ne' 'nl' 'no' 'ny' 'pa' 'ps' 'ru' 'sd' 'sk' 'sl' 'sm' 'sn' 'so' 'sq' 'sr' 'st' 'su' 'sv' 'sw' 'tg' 'th' 'tr' 'uk' 'ur' 'uz' 'vi' 'xh' 'yi' 'yo' 'zh' 'zu')
+
+
+LANG=${LANGUAGES[$SLURM_ARRAY_TASK_ID]}
 
 echo "Creating wikipedia corpus for ${LANG}"
-echo "If Latin: ${IF_LATN}"
 
-if [ $IF_LATN ]
-then
-    python construct_wikipedia_lexicon.py --lang $LANG --lexicon_directory "../../lexicons"  --do_capitalize
-else
-    python construct_wikipedia_lexicon.py --lang $LANG --lexicon_directory "../../lexicons"
-fi
+sleep $((100 * ${SLURM_ARRAY_TASK_ID}))
+
+python construct_wikipedia_lexicon.py --lang $LANG --lexicon_directory "../../lexicons" --pre_processing_file "../../byte_maps/decompose.json"  --do_capitalize

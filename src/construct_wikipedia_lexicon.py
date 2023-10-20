@@ -3,7 +3,10 @@ import codecs
 import re
 from collections import defaultdict
 from datasets import load_dataset
+from datasets.arrow_reader import DatasetNotOnHfGcsError
 from mosestokenizer import MosesTokenizer
+import psutil
+from torch.utils.data import DataLoader
 
 
 from rewrite_bytes import ByteRewriter
@@ -27,27 +30,58 @@ def count_in_corpus(language: str, lexeme_count: dict[str, int], rewriter: ByteR
 	lexeme_rewriter = ByteRewriter(lexeme_codes)
 
 	tokenizer = MosesTokenizer(language)
+	
+	batch_size = 5
+	max_dataset_size = 2500000
 
 	if corpus == 'wikipedia':
-		dataset = load_dataset('wikipedia', date="20230920", language=language, split='train', beam_runner='DirectRunner')
+		try:
+			dataset = load_dataset('wikipedia', f"20220301.{language}", split='train', streaming=True)
+		except (ValueError, DatasetNotOnHfGcsError):
+			print("DirectRunner dataset loaded. OOM may occur! Date:20220301")
+			beamed_dataset = load_dataset('wikipedia', date="20230920", language=language, split='train', beam_runner='DirectRunner')
+			dataset = beamed_dataset.to_iterable_dataset()
+		else:
+			print("Streaming wikipedia from HF. Date:20230920")
+		dataset = dataset.take(max_dataset_size)
 	else:
 		raise ValueError(f"Only Wikipedia supported")
-
-	# iterate over the dataset
-	for example in tqdm(dataset['text']):
+	
+	def process_wikipedia_example(batch):
+		partial_lexeme_count = defaultdict(int)
+		#for example in batch["text"]:
+		example = "\n".join(batch["text"])
 		tokenized_txt = tokenizer(example.replace("\n", " "))
-		if no_lexicon:
-			for token in tokenized_txt:
-				token_normalized = rewriter.rewrite_bytes(str_to_hex(token).split(' '))
-				lexeme_count[" ".join(token_normalized)] += 1
-		else:
-			bytes_normalized = rewriter.rewrite_bytes(str_to_hex(" ".join(tokenized_txt)).split(' '))
+		bytes_normalized = rewriter.rewrite_bytes(str_to_hex(" ".join(tokenized_txt)).split(' '))
+		bytes_lexemized = lexeme_rewriter.rewrite_bytes(bytes_normalized)
+		# find lexem ids in the text
+		lexem_ids = [tok for tok in bytes_lexemized if tok.startswith("lex_")]
 
-			bytes_lexemized = lexeme_rewriter.rewrite_bytes(bytes_normalized)
-			# find lexem ids in the text
-			lexem_ids = [tok for tok in bytes_lexemized if tok.startswith("lex_")]
-			for lid in lexem_ids:
-				lexeme_count[reverse_lexeme_codes[lid]] += 1
+		for lid in lexem_ids:
+			partial_lexeme_count[reverse_lexeme_codes[lid]] += 1
+		batch['lexeme_count'] = [[(lex, count) for lex, count in partial_lexeme_count.items()]]
+		return batch
+
+	def process_wikipedia_example_no_lexion(batch):
+		partial_lexeme_count = defaultdict(int)
+
+		example = "\n".join(batch["text"])
+		tokenized_txt = tokenizer(example.replace("\n", " "))
+		for token in tokenized_txt:
+			token_normalized = rewriter.rewrite_bytes(str_to_hex(token).split(' '))
+			partial_lexeme_count[" ".join(token_normalized)] += 1
+		batch['lexeme_count'] = [[(lex, count) for lex, count in partial_lexeme_count.items()]]
+		return batch
+	
+		
+	if no_lexicon:
+		dataset = dataset.map(lambda x: process_wikipedia_example_no_lexion(x), batched=True, batch_size=batch_size, remove_columns=["text", "title", "url", "id"])
+	else:
+		dataset = dataset.map(lambda x: process_wikipedia_example(x), batched=True, batch_size=batch_size, remove_columns=["text", "title", "url", "id"])
+	
+	for batch in tqdm(dataset, desc="Processing Wikipedia lexems"):
+		for lexeme, count in batch['lexeme_count']:
+			lexeme_count[lexeme] += count
 
 	return lexeme_count
 
