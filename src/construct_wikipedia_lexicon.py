@@ -94,6 +94,7 @@ if __name__ == "__main__":
 	argparser.add_argument("--no_lexicon", help="do not save lexicon", action="store_true", default=False)
 	argparser.add_argument("--min_occurances", help="minimum occuracnes for a lexeme", default=0, type=int)
 	argparser.add_argument("--lexicon_size", help="Pre-set lexicon size", default=50000, type=int)
+	argparser.add_argument("--filter_en", help="filter english words", action="store_true", default=False)
 
 	args = argparser.parse_args()
 
@@ -107,7 +108,10 @@ if __name__ == "__main__":
 			with open(f"{args.lexicon_directory}/{args.language}_dir.txt", "r") as dictionary_file:
 				dictionary_lines = dictionary_file.readlines()
 				for line in dictionary_lines:
-					_, lexeme = line.split()
+					en_lexeme, lexeme = line.split()
+					if args.filter_en and en_lexeme == lexeme and args.language != 'en':
+						# filter words that are the samie in english
+						continue
 					lexeme_counts[lexeme] = 0
 					if args.do_capitalize:
 						lexeme_counts[lexeme.capitalize()] = 0
