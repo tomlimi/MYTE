@@ -4,10 +4,9 @@ import re
 from collections import defaultdict
 from datasets import load_dataset
 from datasets.arrow_reader import DatasetNotOnHfGcsError
-from mosestokenizer import MosesTokenizer
+import nltk
 import psutil
 from torch.utils.data import DataLoader
-
 
 from rewrite_bytes import ByteRewriter
 from utils import hex_to_str, str_to_hex, bytes_to_hex
@@ -29,7 +28,6 @@ def count_in_corpus(language: str, lexeme_count: dict[str, int], rewriter: ByteR
 	reverse_lexeme_codes = {v:k for k,v in lexeme_codes.items()}
 	lexeme_rewriter = ByteRewriter(lexeme_codes)
 
-	tokenizer = MosesTokenizer(language)
 	
 	batch_size = 5
 	max_dataset_size = 2500000
@@ -51,7 +49,7 @@ def count_in_corpus(language: str, lexeme_count: dict[str, int], rewriter: ByteR
 		partial_lexeme_count = defaultdict(int)
 		#for example in batch["text"]:
 		example = "\n".join(batch["text"])
-		tokenized_txt = tokenizer(example.replace("\n", " "))
+		tokenized_txt = nltk.word_tokenize(example.replace("\n"," "))
 		bytes_normalized = rewriter.rewrite_bytes(str_to_hex(" ".join(tokenized_txt)).split(' '))
 		bytes_lexemized = lexeme_rewriter.rewrite_bytes(bytes_normalized)
 		# find lexem ids in the text
@@ -66,7 +64,7 @@ def count_in_corpus(language: str, lexeme_count: dict[str, int], rewriter: ByteR
 		partial_lexeme_count = defaultdict(int)
 
 		example = "\n".join(batch["text"])
-		tokenized_txt = tokenizer(example.replace("\n", " "))
+		tokenized_txt = nltk.word_tokenize(example.replace("\n", " "))
 		for token in tokenized_txt:
 			token_normalized = rewriter.rewrite_bytes(str_to_hex(token).split(' '))
 			partial_lexeme_count[" ".join(token_normalized)] += 1
