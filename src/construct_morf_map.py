@@ -29,9 +29,9 @@ def merged_morf_map(languages: Iterable[str], mtn: int, model_dir: str, sort_by_
 		lang2hex_prefix[lang] = lang_hex_id
 
 		if sort_by_cost:
-			morf_lang = get_morf_cost(lang, model_dir,sort_by_cost, mtn)
+			morf_lang = get_morf_cost(lang, model_dir,True, mtn)
 		else:
-			morf_lang = get_morf_count(lang, model_dir,sort_by_cost, mtn)
+			morf_lang = get_morf_count(lang, model_dir,True, mtn)
 
 		# assert mtn <= 16**(TARGET_BYTE_PER_CODE*2 - 3), f"Too many codes for {lang}"
 		print(f"Language {lang} has {len(morf_lang)} morfs to add.")
@@ -86,7 +86,8 @@ def get_morf_count(language: str, model_dir:str, normalize:bool=True, mtn=4096):
 		splitloc = node.splitloc
 		# consider LEAF construction longer than 1 atom
 		if not splitloc and len(construction) > 1:
-			construction_counts.append(count)
+			list_of_constructions.append(construction)
+			construction_counts.append(float(count))
 
 	construction_counts = np.array(construction_counts)
 	if normalize:
@@ -111,11 +112,10 @@ def get_morf_cost(language: str, model_dir: str ,normalize: bool=True, mtn=4096)
 		# consider LEAF construction longer than 1 atom
 		if not splitloc and len(construction) > 1:
 			model._modify_construction_count(construction, -count)
-			construction_costs.append(count)
 			constuction_cost =  base_cost - model.get_cost()
 			model._modify_construction_count(construction, count)
 			list_of_constructions.append(construction)
-			construction_costs.append(constuction_cost)
+			construction_costs.append(float(constuction_cost))
 
 	construction_costs = np.array(construction_costs)
 	if normalize:
