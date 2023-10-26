@@ -3,6 +3,8 @@ import argparse
 import json
 import morfessor
 from collections import Counter, OrderedDict, defaultdict
+import numpy as np
+from copy import copy
 
 from typing import Iterable
 
@@ -11,12 +13,14 @@ HEX_RANGES =[(0x0420, 0x05af),(0x0f50,0x0fff)]
 LANG_CODE_LIMIT = 4096
 TARGET_BYTE_PER_CODE = 3
 
+
 def group_morfs(languages: Iterable[str], mtn: int, model_dir: str) -> list[dict]:
 	pass
 
-def merged_morf_map(languages: Iterable[str], mtn: int, model_dir: str) -> dict[str,str]:
+
+def merged_morf_map(languages: Iterable[str], mtn: int, model_dir: str, sort_by_cost: bool) -> dict[str,str]:
 	morf_mapping = {}
-	morf_total_count = defaultdict(int)
+	morf_total_score = defaultdict(int)
 	lang2hex_prefix = {}
 	hex_codes_available = list(chain(*[range(*r) for r in HEX_RANGES]))
 
@@ -24,31 +28,33 @@ def merged_morf_map(languages: Iterable[str], mtn: int, model_dir: str) -> dict[
 		lang_hex_id= hex_codes_available[lang_id]
 		lang2hex_prefix[lang] = lang_hex_id
 
-		morf_lang_count = get_morf_count(lang, model_dir, mtn)
-		# assert mtn <= 16**(TARGET_BYTE_PER_CODE*2 - 3), f"Too many codes for {lang}"
-		print(f"Language {lang} has {len(morf_lang_count)} morfs appearing in total {sum(morf_lang_count.values())} times in lexicon")
+		if sort_by_cost:
+			morf_lang = get_morf_cost(lang, model_dir,sort_by_cost, mtn)
+		else:
+			morf_lang = get_morf_count(lang, model_dir,sort_by_cost, mtn)
 
-		morf_dict = OrderedDict(morf_lang_count)
-		morf_dict = {morf: count for morf, count in morf_lang_count.items() }	
+		# assert mtn <= 16**(TARGET_BYTE_PER_CODE*2 - 3), f"Too many codes for {lang}"
+		print(f"Language {lang} has {len(morf_lang)} morfs to add.")
+
 
 		added_code_id = 0
-		for morf, count in morf_dict.items():
+		for morf, score in morf_lang.items():
 			if len(morf) <= TARGET_BYTE_PER_CODE:
 				continue
-				# Adding morfs only longer than TARGET_BYTE_PER_CODE 
+				# Adding morfs only longer than TARGET_BYTE_PER_CODE
 			morf_orth = " ".join(morf)
-			if morf_orth in morf_mapping and morf_total_count[morf_orth] >= count:
+			if morf_orth in morf_mapping and morf_total_score[morf_orth] >= score:
 				continue
-				# TODO resolve colissions possibly by counts
+				# TODO resolve colissions possibly by scores
 
 			# rewrtie code is a 3 byte code used to replace the byte sequence.
 			# TODO generalize to other number of bytes.
 			assert TARGET_BYTE_PER_CODE == 3
 			rewrite_code = f"{lang_hex_id:03x}{added_code_id:03x}"
 			rewrite_code = rewrite_code[:2] + ' ' + rewrite_code[2:4] + ' ' + rewrite_code[4:]
-			
+
 			morf_mapping[morf_orth] = rewrite_code
-			morf_total_count[morf_orth] = count
+			morf_total_score[morf_orth] = score
 			added_code_id += 1
 
 			if added_code_id >= 16**(TARGET_BYTE_PER_CODE*2 - 3):
@@ -60,17 +66,66 @@ def merged_morf_map(languages: Iterable[str], mtn: int, model_dir: str) -> dict[
 	return morf_mapping
 
 
-def get_morf_count(language: str, model_dir:str, mtn=4096):
+def get_morfessor_model(language: str, model_dir: str, mtn=4096):
 	# load morfessor model
 	model_file = f"{model_dir}/{language}_{mtn}.bin"
 	# load morfessor model
 	model = morfessor.MorfessorIO().read_binary_model_file(model_file)
-	# get the set of tokens
+	return model
+
+
+def get_morf_count(language: str, model_dir:str, normalize:bool=True, mtn=4096):
+	model = get_morfessor_model(language, model_dir, mtn)
+
 	list_of_constructions = []
-	for construction, _ in model._analyses.items():
-		list_of_constructions.extend(model.segment(construction))
-	
-	return Counter(list_of_constructions)
+	construction_counts = []
+	analyses = copy(model._analyses)
+
+	for construction, node in analyses.items():
+		count = node.count
+		splitloc = node.splitloc
+		# consider LEAF construction longer than 1 atom
+		if not splitloc and len(construction) > 1:
+			construction_counts.append(count)
+
+	construction_counts = np.array(construction_counts)
+	if normalize:
+		construction_counts /= construction_counts.sum()
+	morf_count = {constr: count for constr, count in zip(list_of_constructions, construction_counts)}
+	morf_count = OrderedDict(sorted(morf_count.items(), key=lambda x: x[1], reverse=True))
+
+	return morf_count
+
+
+def get_morf_cost(language: str, model_dir: str ,normalize: bool=True, mtn=4096):
+	model = get_morfessor_model(language, model_dir, mtn)
+
+	list_of_constructions = []
+	construction_costs = []
+	analyses = copy(model._analyses)
+	base_cost = model.get_cost()
+
+	for construction, node in analyses.items():
+		count = node.count
+		splitloc = node.splitloc
+		# consider LEAF construction longer than 1 atom
+		if not splitloc and len(construction) > 1:
+			model._modify_construction_count(construction, -count)
+			construction_costs.append(count)
+			constuction_cost =  base_cost - model.get_cost()
+			model._modify_construction_count(construction, count)
+			list_of_constructions.append(construction)
+			construction_costs.append(constuction_cost)
+
+	construction_costs = np.array(construction_costs)
+	if normalize:
+		construction_costs /= construction_costs.sum()
+
+	morf_cost = {constr: cost for constr, cost in zip(list_of_constructions, construction_costs)}
+	morf_cost = OrderedDict(sorted(morf_cost.items(), key=lambda x: x[1], reverse=True))
+
+	return morf_cost
+
 
 if __name__ == "__main__":
 
@@ -80,18 +135,13 @@ if __name__ == "__main__":
 	argparser.add_argument("--model_dir", required=True)
 	argparser.add_argument("--mapping_dir", required=True)
 	argparser.add_argument("--suffix", required=False, default="")
+	argparser.add_argument("--sort_by_cost", action="store_true", default=False)
 	args = argparser.parse_args()
 
-	# TODO: group languages by morf similarrity
+	# TODO: group languages by morf similarrity / script used
 	# grouped_morfs = group_morfs(args.languages, args.mtn, args.model_dir)
 
-	morf_mapping = merged_morf_map(args.languages, args.mtn, args.model_dir)
+	morf_mapping = merged_morf_map(args.languages, args.mtn, args.model_dir, args.sort_by_cost)
 
-	# with open(f"{args.mapping_dir}/decompose_lc.json", "r") as f:
-	# 	byte_map = json.load(f)
-
-	# print("Byte map before update: ", len(byte_map))
-	# byte_map.update(morf_mapping)
-	# print("Byte map after update: ", len(byte_map))
 	with open(f"{args.mapping_dir}/morf_map{args.suffix}.json", "w") as f:
 		json.dump(morf_mapping, f, indent=4)
