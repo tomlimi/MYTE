@@ -2,25 +2,69 @@ from itertools import chain
 import argparse
 import json
 import morfessor
-from collections import Counter, OrderedDict, defaultdict
+from collections import OrderedDict, defaultdict
 import numpy as np
 from copy import copy
 
-from typing import Iterable
+from typing import Iterable, Iterator
+from utils import NUM_MORPH_CLUSTERS, get_morph_cluster
 
 # For the first code decompostion need
-HEX_RANGES =[(0x0420, 0x05af),(0x0f50,0x0fff)]
+HEX_RANGES = [(0x0420, 0x05af), (0x0f50, 0x0fff)]
+
+B3_LEADING = 0x42
+B4_LEADING = 0x4d
 LANG_CODE_LIMIT = 4096
 TARGET_BYTE_PER_CODE = 3
 
 
-def group_morfs(languages: Iterable[str], mtn: int, model_dir: str) -> list[dict]:
-	pass
+def add_morph_mapping_from_iterator(morph_iterator: Iterator[tuple], cluster_id: int) -> dict[str, str]:
+	cluster_morph_mapping = {}
+	b1 = cluster_id + B3_LEADING
+	for b2 in range(0x80, 0xbf):
+		for b3 in range(0x80, 0xbf):
+			morph = next(morph_iterator)
+			if morph is None:
+				return cluster_morph_mapping
+			if len(morph) <= 3:
+				continue
+			morph_orth = " ".join(morph)
+			morph_mapping_code = f"{b1:02x} {b2:02x} {b3:02x}"
+			cluster_morph_mapping[morph_orth] = morph_mapping_code
+
+	b1 = cluster_id + B4_LEADING
+	for b2 in range(0x80, 0xbf):
+		for b3 in range(0x80, 0xbf):
+			for b4 in range(0x80, 0xbf):
+				morph = next(morph_iterator)
+				if morph is None:
+					return cluster_morph_mapping
+				if len(morph) <= 4:
+					continue
+				morph_orth = " ".join(morph)
+				morph_mapping_code = f"{b1:02x} {b2:02x} {b3:02x} {b4:02x}"
+				cluster_morph_mapping[morph_orth] = morph_mapping_code
+
+	return cluster_morph_mapping
 
 
-def merged_morf_map(languages: Iterable[str], mtn: int, model_dir: str, sort_by_cost: bool) -> dict[str,str]:
+def get_clustered_mapping(clustered_morphs: dict[int, dict[tuple, float]]) -> dict[str, str]:
+	morph_mapping = {}
+
+	for cluster_id, cluster_morphs in clustered_morphs.items():
+		# add morphs with highest scores as 3 byte mapping
+		cluster_morphs = OrderedDict(sorted(cluster_morphs.items(), key=lambda x: x[1], reverse=True))
+		morph_iterator = iter((*cluster_morphs.keys(), None))
+		cluster_morph_mapping = add_morph_mapping_from_iterator(morph_iterator, cluster_id)
+		print(f"For cluster: {cluster_id} added {len(cluster_morph_mapping)} morphs")
+		morph_mapping.update(cluster_morph_mapping)
+	return morph_mapping
+
+def merged_morf_map(languages: Iterable[str], mtn: int, model_dir: str, sort_by_cost: bool, cluster_scripts: bool) -> dict[str,str]:
 	morf_mapping = {}
 	morf_total_score = defaultdict(int)
+	clustered_morfs = {cluster_id: {} for cluster_id in range(NUM_MORPH_CLUSTERS)}
+
 	lang2hex_prefix = {}
 	hex_codes_available = list(chain(*[range(*r) for r in HEX_RANGES]))
 
@@ -36,32 +80,43 @@ def merged_morf_map(languages: Iterable[str], mtn: int, model_dir: str, sort_by_
 		# assert mtn <= 16**(TARGET_BYTE_PER_CODE*2 - 3), f"Too many codes for {lang}"
 		print(f"Language {lang} has {len(morf_lang)} morfs to add.")
 
+		if not cluster_scripts:
+			added_code_id = 0
+			for morf, score in morf_lang.items():
+				if len(morf) <= TARGET_BYTE_PER_CODE:
+					continue
+					# Adding morfs only longer than TARGET_BYTE_PER_CODE
+				morf_orth = " ".join(morf)
+				if morf_orth in morf_mapping and morf_total_score[morf_orth] >= score:
+					continue
+					# TODO resolve colissions possibly by scores
 
-		added_code_id = 0
-		for morf, score in morf_lang.items():
-			if len(morf) <= TARGET_BYTE_PER_CODE:
-				continue
-				# Adding morfs only longer than TARGET_BYTE_PER_CODE
-			morf_orth = " ".join(morf)
-			if morf_orth in morf_mapping and morf_total_score[morf_orth] >= score:
-				continue
-				# TODO resolve colissions possibly by scores
+				# rewrtie code is a 3 byte code used to replace the byte sequence.
+				# TODO generalize to other number of bytes.
+				assert TARGET_BYTE_PER_CODE == 3
+				rewrite_code = f"{lang_hex_id:03x}{added_code_id:03x}"
+				rewrite_code = rewrite_code[:2] + ' ' + rewrite_code[2:4] + ' ' + rewrite_code[4:]
 
-			# rewrtie code is a 3 byte code used to replace the byte sequence.
-			# TODO generalize to other number of bytes.
-			assert TARGET_BYTE_PER_CODE == 3
-			rewrite_code = f"{lang_hex_id:03x}{added_code_id:03x}"
-			rewrite_code = rewrite_code[:2] + ' ' + rewrite_code[2:4] + ' ' + rewrite_code[4:]
+				morf_mapping[morf_orth] = rewrite_code
+				morf_total_score[morf_orth] = score
+				added_code_id += 1
 
-			morf_mapping[morf_orth] = rewrite_code
-			morf_total_score[morf_orth] = score
-			added_code_id += 1
+				if added_code_id >= 16**(TARGET_BYTE_PER_CODE*2 - 3):
+					print(f"Warning: {lang} has more codes than suported, truncating")
+					break
 
-			if added_code_id >= 16**(TARGET_BYTE_PER_CODE*2 - 3):
-				print(f"Warning: {lang} has more codes than suported, truncating")
-				break
+			print(f"Added {added_code_id} codes to the dictionary for {lang}")
+		else:
+			for morph, score in morf_lang.items():
+				if len(morph) <= TARGET_BYTE_PER_CODE:
+					continue
 
-		print(f"Added {added_code_id} codes to the dictionary for {lang}")
+				cluster_id = get_morph_cluster(morph)
+				if morph not in clustered_morfs[cluster_id] or clustered_morfs[cluster_id][morph] < score:
+					clustered_morfs[cluster_id][morph] = score
+
+	if cluster_scripts:
+		morf_mapping = get_clustered_mapping(clustered_morfs)
 
 	return morf_mapping
 
@@ -136,12 +191,13 @@ if __name__ == "__main__":
 	argparser.add_argument("--mapping_dir", required=True)
 	argparser.add_argument("--suffix", required=False, default="")
 	argparser.add_argument("--sort_by_cost", action="store_true", default=False)
+	argparser.add_argument("--cluster_scripts", action="store_true", default=False)
 	args = argparser.parse_args()
 
 	# TODO: group languages by morf similarrity / script used
 	# grouped_morfs = group_morfs(args.languages, args.mtn, args.model_dir)
 
-	morf_mapping = merged_morf_map(args.languages, args.mtn, args.model_dir, args.sort_by_cost)
+	morf_mapping = merged_morf_map(args.languages, args.mtn, args.model_dir, args.sort_by_cost, args.cluster_scripts)
 
 	with open(f"{args.mapping_dir}/morf_map{args.suffix}.json", "w") as f:
 		json.dump(morf_mapping, f, indent=4)
