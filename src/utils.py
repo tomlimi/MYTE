@@ -12,21 +12,18 @@ def bytes_to_hex(bline: bytes, sep: str = ' ') -> str:
 def hex_to_str(bline: str, sep: str = ' ') -> str:
 	return str(binascii.unhexlify(bline.replace(sep, '')), "utf-8")
 
-NUM_MORPH_CLUSTERS = 11
+NUM_MORPH_CLUSTERS = 8
 
-# TODO: up for modifications
+# TODO: up for modifications / TRY 8 clusters and 
 script_clusters =\
 	{0: ['Latin'],
-	 1: ['Mixed'],
+	 1: ['Mixed', 'Common', 'Inherited', 'Unkonwn'],
 	 2: ['Greek', 'Cyrillic', 'Armenian', 'Georgian'],
 	 3: ['Hebrew', 'Arabic', 'Syriac', 'Thaana'],
 	 4: ['Devanagari',  'Gurmukhi', 'Gujarati', 'Oriya', 'Telugu', 'Kannada'],
 	 5: ['Bengali','Malayalam', 'Tamil', 'Sinhala','Thai', 'Lao', 'Myanmar',  'Tai_Le','Tai_Tham', 'Tai_Viet'],
-	 6: ['Hangul', 'Khmer', 'Mongolian', 'Tagalog'],
-	 7: ['Han', 'Yi', 'Katakana', 'Hiragana', 'Tibetan', 'Bopomofo'],
-	 8: ['Ethiopic', 'Coptic', ],
-	 9: ['Common', 'Braille', 'Inherited' ],
-	 10: ['Cherokee', 'Javanese', 'Sundanese', 'Imperial_Aramaic', 'Tifinagh', 'Cuneiform', 'Gothic', 'Nko', 'Ol_Chiki',
+	 6: ['Hangul', 'Khmer', 'Mongolian', 'Tagalog', 'Han', 'Yi', 'Katakana', 'Hiragana', 'Tibetan', 'Bopomofo'],
+	 7: ['Ethiopic', 'Coptic', 'Cherokee', 'Javanese', 'Sundanese', 'Imperial_Aramaic', 'Tifinagh', 'Cuneiform', 'Gothic', 'Nko', 'Ol_Chiki',
 	      'Old_Persian', 'Canadian_Aboriginal', 'Buginese', 'Balinese', 'Phoenician', 'Avestan','Bamum', 'Batak',
 	      'Brahmi', 'Buhid', 'Carian','Chakma', 'Cham', 'Cypriot','Deseret', 'Egyptian_Hieroglyphs', 'Glagolitic',
 	      'Hanunoo', 'Inscriptional_Pahlavi', 'Inscriptional_Parthian', 'Kaithi', 'Kayah_Li', 'Kharoshthi',

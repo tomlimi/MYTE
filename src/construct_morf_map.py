@@ -12,14 +12,27 @@ from utils import NUM_MORPH_CLUSTERS, get_morph_cluster
 # For the first code decompostion need
 HEX_RANGES = [(0x0420, 0x05af), (0x0f50, 0x0fff)]
 
-B3_LEADING = 0x42
-B4_LEADING = 0x4d
+B2_LEADING = 0x42
+B3_LEADING = 0x4a
+B4_LEADING = 0x52
 LANG_CODE_LIMIT = 4096
 TARGET_BYTE_PER_CODE = 3
 
 
 def add_morph_mapping_from_iterator(morph_iterator: Iterator[tuple], cluster_id: int) -> dict[str, str]:
 	cluster_morph_mapping = {}
+
+	b1 = cluster_id + B2_LEADING
+	for b2 in range(0x80, 0xbf):
+		morph = next(morph_iterator)
+		if morph is None:
+			return cluster_morph_mapping
+		if len(morph) <= 2:
+			continue
+		morph_orth = " ".join(morph)
+		morph_mapping_code = f"{b1:02x} {b2:02x}"
+		cluster_morph_mapping[morph_orth] = morph_mapping_code
+
 	b1 = cluster_id + B3_LEADING
 	for b2 in range(0x80, 0xbf):
 		for b3 in range(0x80, 0xbf):
