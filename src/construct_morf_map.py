@@ -112,6 +112,8 @@ def merged_morf_map(languages: Iterable[str], mtn: int, model_dir: str, sort_by_
 					continue
 
 				cluster_id = get_morph_cluster(morph)
+				if cluster_id is None:
+					continue
 				if morph not in clustered_morfs[cluster_id] or clustered_morfs[cluster_id][morph] < score:
 					clustered_morfs[cluster_id][morph] = score
 
