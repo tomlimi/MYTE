@@ -35,9 +35,15 @@ def count_in_corpus(language: str, lexeme_count: dict[str, int], rewriter: ByteR
 	if corpus == 'wikipedia':
 		try:
 			dataset = load_dataset('wikipedia', f"20220301.{language}", split='train', streaming=True)
+
 		except (ValueError, DatasetNotOnHfGcsError):
-			print("DirectRunner dataset loaded. OOM may occur! Date:20220301")
-			beamed_dataset = load_dataset('wikipedia', date="20230920", language=language, split='train', beam_runner='DirectRunner')
+			try:
+				beamed_dataset = load_dataset('wiki40b', language, split='train', beam_runner='DirectRunner')
+			except (ValueError, DatasetNotOnHfGcsError):
+				print("DirectRunner dataset loaded. OOM may occur! Date:20220301")
+				beamed_dataset = load_dataset('wikipedia', date="20230920", language=language, split='train', beam_runner='DirectRunner')
+			else:
+				print("DirectRunner dataset loaded. OOM may occur! Wiki40b")
 			dataset = beamed_dataset.to_iterable_dataset()
 		else:
 			print("Streaming wikipedia from HF. Date:20230920")
@@ -73,9 +79,9 @@ def count_in_corpus(language: str, lexeme_count: dict[str, int], rewriter: ByteR
 	
 		
 	if no_lexicon:
-		dataset = dataset.map(lambda x: process_wikipedia_example_no_lexion(x), batched=True, batch_size=batch_size, remove_columns=["text", "title", "url", "id"])
+		dataset = dataset.map(lambda x: process_wikipedia_example_no_lexion(x), batched=True, batch_size=batch_size, remove_columns=list(dataset.features.keys()))
 	else:
-		dataset = dataset.map(lambda x: process_wikipedia_example(x), batched=True, batch_size=batch_size, remove_columns=["text", "title", "url", "id"])
+		dataset = dataset.map(lambda x: process_wikipedia_example(x), batched=True, batch_size=batch_size, remove_columns=list(dataset.features.keys()))
 	
 	for batch in tqdm(dataset, desc="Processing Wikipedia lexems"):
 		for lexeme, count in batch['lexeme_count']:
