@@ -17,7 +17,7 @@ NUM_MORPH_CLUSTERS = 8
 # TODO: up for modifications / TRY 8 clusters and 
 script_clusters =\
 	{0: ['Latin'],
-	 1: ['Mixed', 'Common', 'Inherited', 'Unkonwn'],
+	 1: ['Mixed', 'Common', 'Inherited', 'Unknown'],
 	 2: ['Greek', 'Cyrillic', 'Armenian', 'Georgian'],
 	 3: ['Hebrew', 'Arabic', 'Syriac', 'Thaana'],
 	 4: ['Devanagari',  'Gurmukhi', 'Gujarati', 'Oriya', 'Telugu', 'Kannada'],
