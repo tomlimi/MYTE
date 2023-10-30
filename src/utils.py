@@ -16,21 +16,21 @@ NUM_MORPH_CLUSTERS = 8
 
 # TODO: up for modifications / TRY 8 clusters and 
 script_clusters =\
-	{0: ['Latin'],
-	 1: ['Mixed', 'Common', 'Inherited', 'Unknown'],
-	 2: ['Greek', 'Cyrillic', 'Armenian', 'Georgian'],
-	 3: ['Hebrew', 'Arabic', 'Syriac', 'Thaana'],
-	 4: ['Devanagari',  'Gurmukhi', 'Gujarati', 'Oriya', 'Telugu', 'Kannada'],
-	 5: ['Bengali','Malayalam', 'Tamil', 'Sinhala','Thai', 'Lao', 'Myanmar',  'Tai_Le','Tai_Tham', 'Tai_Viet'],
-	 6: ['Hangul', 'Khmer', 'Mongolian', 'Tagalog', 'Han', 'Yi', 'Katakana', 'Hiragana', 'Tibetan', 'Bopomofo'],
-	 7: ['Ethiopic', 'Coptic', 'Cherokee', 'Javanese', 'Sundanese', 'Imperial_Aramaic', 'Tifinagh', 'Cuneiform', 'Gothic', 'Nko', 'Ol_Chiki',
+	{0: ['Latin'], # Latin
+	 1: ['Mixed', 'Common', 'Inherited', 'Unknown'], # Mixed and Special Scripts
+	 2: ['Greek', 'Cyrillic', 'Armenian', 'Georgian'], # Non-latin European Alphabetic
+	 3: ['Hebrew', 'Arabic', 'Syriac', 'Thaana', 'Tifinagh'], # Semitic Abjads
+	 4: ['Devanagari',  'Gurmukhi', 'Gujarati', 'Oriya','Bengali', 'Sinhala', 'Tibetan'], # North Indic Abudjdas
+	 5: ['Telugu', 'Kannada', 'Tamil','Malayalam','Thai', 'Lao', 'Myanmar',  'Tai_Le','Tai_Tham', 'Tai_Viet', 'Tagalog','Khmer'], # South Indic  and South-East Asian Abudjdas
+	 6: ['Hangul', 'Han', 'Yi', 'Katakana', 'Hiragana', 'Bopomofo'], # CJK East Asian Scripts
+	 7: ['Mongolian', 'Ethiopic', 'Coptic', 'Cherokee', 'Javanese', 'Sundanese', 'Imperial_Aramaic',  'Cuneiform', 'Gothic', 'Nko', 'Ol_Chiki',
 	      'Old_Persian', 'Canadian_Aboriginal', 'Buginese', 'Balinese', 'Phoenician', 'Avestan','Bamum', 'Batak',
 	      'Brahmi', 'Buhid', 'Carian','Chakma', 'Cham', 'Cypriot','Deseret', 'Egyptian_Hieroglyphs', 'Glagolitic',
 	      'Hanunoo', 'Inscriptional_Pahlavi', 'Inscriptional_Parthian', 'Kaithi', 'Kayah_Li', 'Kharoshthi',
 	      'Lepcha', 'Limbu', 'Linear_B', 'Lisu', 'Lycian', 'Lydian', 'Mandaic', 'Meetei_Mayek', 'Meroitic_Cursive',
 	      'Meroitic_Hieroglyphs', 'Miao', 'New_Tai_Lue', 'Ogham', 'Old_Italic', 'Old_South_Arabian', 'Old_Turkic',
 	      'Osmanya', 'Phags_Pa', 'Rejang', 'Runic', 'Samaritan', 'Saurashtra', 'Sharada', 'Shavian', 'Sora_Sompeng',
-	      'Syloti_Nagri', 'Tagbanwa', 'Takri', 'Ugaritic', 'Vai']
+	      'Syloti_Nagri', 'Tagbanwa', 'Takri', 'Ugaritic', 'Vai'] # Other scipts
 	 }
 
 # TODO: check if there are updates in the standard
