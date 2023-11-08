@@ -73,7 +73,8 @@ def get_clustered_mapping(clustered_morphs: dict[int, dict[tuple, float]]) -> di
 		morph_mapping.update(cluster_morph_mapping)
 	return morph_mapping
 
-def merged_morf_map(languages: Iterable[str], mtn: int, model_dir: str, sort_by_cost: bool, cluster_scripts: bool) -> dict[str,str]:
+
+def merged_morf_map(languages: Iterable[str], mtn: int, model_dir: str, sort_by_cost: bool, cluster_scripts: bool, method: str) -> dict[str,str]:
 	morf_mapping = {}
 	morf_total_score = defaultdict(int)
 	clustered_morfs = {cluster_id: {} for cluster_id in range(NUM_MORPH_CLUSTERS)}
@@ -85,10 +86,13 @@ def merged_morf_map(languages: Iterable[str], mtn: int, model_dir: str, sort_by_
 		lang_hex_id= hex_codes_available[lang_id]
 		lang2hex_prefix[lang] = lang_hex_id
 
-		if sort_by_cost:
-			morf_lang = get_morf_cost(lang, model_dir,True, mtn)
+		if method == "morfessor":
+			if sort_by_cost:
+				morf_lang = get_morf_cost(lang, model_dir,True, mtn)
+			else:
+				morf_lang = get_morf_count(lang, model_dir,True, mtn)
 		else:
-			morf_lang = get_morf_count(lang, model_dir,True, mtn)
+			morf_lang = get_subwords(method, lang, model_dir, mtn)
 
 		# assert mtn <= 16**(TARGET_BYTE_PER_CODE*2 - 3), f"Too many codes for {lang}"
 		print(f"Language {lang} has {len(morf_lang)} morfs to add.")
@@ -197,6 +201,23 @@ def get_morf_cost(language: str, model_dir: str ,normalize: bool=True, mtn=4096)
 	return morf_cost
 
 
+def get_subwords(method, language, model_dir, mtn):
+	tokenizer = f"{model_dir}/{method}_{language}_{mtn}.json"
+	if method == "bpe":
+		raise NotImplementedError
+
+	# loading vocabulary
+	tokenizer_dict = json.load(open(tokenizer, "r"))
+	vocabulary = tokenizer_dict["model"]["vocab"][1:]
+	vocabulary_costs = np.log(np.array([v[1] for v in vocabulary]))
+	vocabulary_costs /= vocabulary_costs.sum()
+
+	sw_cost = {sw_logit[0]: cost for sw_logit, cost in zip(vocabulary, vocabulary_costs)}
+	sw_cost = OrderedDict(sorted(sw_cost.items(), key=lambda x: x[1], reverse=True))
+
+	return sw_cost
+
+
 if __name__ == "__main__":
 
 	argparser = argparse.ArgumentParser()
@@ -207,12 +228,12 @@ if __name__ == "__main__":
 	argparser.add_argument("--suffix", required=False, default="")
 	argparser.add_argument("--sort_by_cost", action="store_true", default=False)
 	argparser.add_argument("--cluster_scripts", action="store_true", default=False)
+	argparser.add_argument("--method", type=str, default="morfessor")
 	args = argparser.parse_args()
 
-	# TODO: group languages by morf similarrity / script used
 	# grouped_morfs = group_morfs(args.languages, args.mtn, args.model_dir)
 
-	morf_mapping = merged_morf_map(args.languages, args.mtn, args.model_dir, args.sort_by_cost, args.cluster_scripts)
+	morf_mapping = merged_morf_map(args.languages, args.mtn, args.model_dir, args.sort_by_cost, args.cluster_scripts, args.method)
 
 	with open(f"{args.mapping_dir}/morf_map{args.suffix}.json", "w") as f:
 		json.dump(morf_mapping, f, indent=4)
