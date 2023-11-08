@@ -1,9 +1,9 @@
 #! /bin/bash
-#SBATCH --job-name=train-morfessor
+#SBATCH --job-name=train-unigram
 #SBATCH --output=slurm_output/train-unigram-%A-%a.log
 #SBATCH --error=slurm_output/train-unigram-%A-%a.log
 #SBATCH --account=zlab
-#SBATCH --partition=ckpt
+#SBATCH --partition=gpu-rtx6k
 #SBATCH --time=22:59:00
 #SBATCH --ntasks=1
 #SBATCH -c 2

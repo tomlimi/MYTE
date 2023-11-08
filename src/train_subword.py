@@ -12,7 +12,7 @@ from tokenizers import (
 )
 from transformers import PreTrainedTokenizerFast
 
-from src.utils import hex_to_str, str_to_hex
+from utils import hex_to_str, str_to_hex
 
 
 def build_gpt_tokenizer(data_path, vocab_sizes):
@@ -47,11 +47,11 @@ def build_lexicon_tokenizer(lexicon_iterator, vocab_size, type="bpe"):
 		trainer = trainers.UnigramTrainer(vocab_size=vocab_size, special_tokens=["<|endoftext|>"], unk_token="<|endoftext|>")
 		tokenizer.model = models.Unigram()
 
-	tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False, use_regex=True)
+	# tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False, use_regex=True)
 	tokenizer.train_from_iterator(tqdm.tqdm(lexicon_iterator), trainer=trainer)
 
-	tokenizer.post_processor = processors.ByteLevel(trim_offsets=False)
-	tokenizer.decoder = decoders.ByteLevel()
+	# tokenizer.post_processor = processors.ByteLevel(trim_offsets=False)
+	# tokenizer.decoder = decoders.ByteLevel()
 
 	# why is it necessary to wrap the tokenizer? Ask Oreva
 	wrapped_tokenizer = PreTrainedTokenizerFast(
@@ -88,9 +88,6 @@ if __name__ == "__main__":
 	args = argparser.parse_args()
 
 	lexicon_iterator = get_lexeme(args.lexicon, args.language, counted=False, output_str=True)
-	for lexeme in lexicon_iterator:
-		print(lexeme)
-	lexicon_iterator = get_lexeme(args.lexicon, args.language, counted=False, output_str=True)
 	tokenizer = build_lexicon_tokenizer(lexicon_iterator, args.vocab_size, type=args.type)
-	tokenizer.save(f"{args.out_dir}/{args.language}_{args.type}_{args.vocab_size}")
+	tokenizer.save_pretrained(f"{args.out_dir}/{args.language}_{args.type}_{args.vocab_size}")
 
