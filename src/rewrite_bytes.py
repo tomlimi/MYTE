@@ -71,7 +71,7 @@ class ByteRewriter:
 				if b in tree_pointer:
 					tree_pointer = tree_pointer[b]
 				elif j == b_start:
-					logging.warning(f"Unrecognized byte {b} in {in_bytes}, Skipping!")
+					# logging.warning(f"Unrecognized byte {b} in {in_bytes}, Skipping!")
 					cur_leaf = [b]
 					b_end = j
 					break
