@@ -13,12 +13,12 @@ from pynvml import *
 from myt5_tokenizer import MyT5Tokenizer
 
 nvmlInit()
-ALL_AVAILABLE_LANGUAGES = ['af', 'am', 'ar', 'az', 'be', 'bg', 'bn', 'ca', 'ceb', 'co', 'cs', 'cy', 'da', 'de', 'el', 'en', 'eo', 'es',
-                 'et', 'eu', 'fa', 'fi', 'fil', 'fr', 'fy', 'ga', 'gd', 'gl', 'gu', 'ha', 'haw','hi', 'hmn', 'ht', 'hu', 'hy',
-                 'id', 'ig', 'is', 'it', 'iw', 'ja', 'jv', 'ka', 'kk', 'km', 'kn', 'ko', 'ku', 'ky', 'la', 'lb', 'lo', 'lt', 'lv',
-                 'mg', 'mi', 'mk', 'ml', 'mn', 'mr', 'ms', 'mt', 'my', 'ne', 'nl', 'no', 'ny', 'pa', 'pl', 'ps', 'pt', 'ro', 'ru',
-                 'sd', 'si', 'sk', 'sl', 'sm', 'sn', 'so', 'sq', 'sr', 'st', 'su', 'sv', 'sw', 'ta', 'te', 'tg', 'th', 'uk', 'ur',
-                 'uz', 'vi', 'xh', 'yi', 'yo', 'zh', 'zu']
+ALL_AVAILABLE_LANGUAGES = ['en', 'ceb', 'de', 'sv', 'fr', 'nl', 'ru', 'es', 'it', 'pl', 'ja', 'zh', 'uk', 'vi', 'ar', 'pt', 'fa', 'ca', 'sr',
+            'id', 'ko', 'no', 'fi', 'tr', 'cs', 'hu', 'ro', 'eu', 'ms', 'eo', 'he', 'hy', 'da', 'bg', 'cy', 'sk', 'uz', 'et',
+            'be', 'kk', 'el', 'lt', 'gl', 'ur', 'az', 'sl', 'ka', 'hi', 'th', 'ta', 'bn', 'mk', 'lv', 'af', 'tg', 'my',
+            'mg', 'sq', 'mr', 'te', 'ml', 'ky', 'sw', 'jv', 'ht', 'lb', 'su', 'ku', 'ga', 'is', 'fy', 'pa', 'yo', 'ne', 'ha',
+            'kn', 'gu', 'mn', 'ig', 'si', 'ps', 'gd', 'sd', 'yi', 'am', 'sn', 'zu', 'km', 'so', 'mi', 'mt', 'lo',
+            'xh', 'sm', 'ny', 'st']
 
 FLORES_MAPPING = {'en': 'eng_Latn', 'ceb': 'ceb_Latn', 'de': 'deu_Latn', 'sv': 'swe_Latn', 'fr': 'fra_Latn', 'nl': 'nld_Latn', 'ru': 'rus_Cyrl', 'es': 'spa_Latn',
                     'it': 'ita_Latn', 'pl': 'pol_Latn', 'ja': 'jpn_Jpan', 'zh': 'zho_Hans', 'uk': 'ukr_Cyrl', 'vi': 'vie_Latn', 'ar': 'arb_Arab',
