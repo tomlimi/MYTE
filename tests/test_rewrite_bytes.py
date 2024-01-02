@@ -1,12 +1,12 @@
 from src.rewrite_bytes import ByteRewriter
-from src.utils import hex_to_str, str_to_hex, bytes_to_hex
+from src.utils import hex_to_str, str_to_hex
 
 import unittest
 from tqdm import tqdm
 
 class TestByteRewriterDecompose(unittest.TestCase):
 
-	rewriter = ByteRewriter("../byte_maps/simple_decompose.json")
+	rewriter = ByteRewriter("../byte_maps/simple_merge.json")
 
 	def test_simple_decompose(self):
 		# test rewriting
@@ -30,7 +30,7 @@ class TestByteRewriterDecompose(unittest.TestCase):
 
 	def test_simple_decompose_non_latin(self):
 
-		rewriter = ByteRewriter("../byte_maps/simple_decompose.json")
+		rewriter = ByteRewriter("../byte_maps/simple_merge.json")
 
 		in_str = "你好世界 Hello WorlD"
 		out_str = "你好世界 hAello wAorldA"
@@ -41,7 +41,7 @@ class TestByteRewriterDecompose(unittest.TestCase):
 		self.assertEqual(self.rewriter.rewrite_bytes(in_hex), out_hex)
 
 	def test_unrecognized_byte(self):
-		rewriter = ByteRewriter("../byte_maps/simple_decompose.json")
+		rewriter = ByteRewriter("../byte_maps/simple_merge.json")
 		in_hex = ['00', '01', 'xx', '03', '61']
 		out_hex = ['00', '01', 'xx', '03', '61']
 
