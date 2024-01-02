@@ -10,8 +10,9 @@ import gc
 import argparse
 from pynvml import *
 
-from src.myt5_tokenizer import MyT5Tokenizer
+from myt5_tokenizer import MyT5Tokenizer
 
+nvmlInit()
 ALL_AVAILABLE_LANGUAGES = ['af', 'am', 'ar', 'az', 'be', 'bg', 'bn', 'ca', 'ceb', 'co', 'cs', 'cy', 'da', 'de', 'el', 'en', 'eo', 'es',
                  'et', 'eu', 'fa', 'fi', 'fil', 'fr', 'fy', 'ga', 'gd', 'gl', 'gu', 'ha', 'haw','hi', 'hmn', 'ht', 'hu', 'hy',
                  'id', 'ig', 'is', 'it', 'iw', 'ja', 'jv', 'ka', 'kk', 'km', 'kn', 'ko', 'ku', 'ky', 'la', 'lb', 'lo', 'lt', 'lv',
@@ -36,12 +37,12 @@ FLORES_MAPPING = {'en': 'eng_Latn', 'ceb': 'ceb_Latn', 'de': 'deu_Latn', 'sv': '
 
 
 def get_model_tokenizer(model_type, model_size, model_steps, checkpoint_dir, device=torch.device("cuda:0")):
-	model = T5ForConditionalGeneration.from_pretrained(f"{checkpoint_dir}/{model_type}_{model_size}_{model_steps}")
+	model = T5ForConditionalGeneration.from_pretrained(f"{checkpoint_dir}/{model_type}_{model_size}_{model_steps}", use_safetensors=True)
 	model = model.to(device)
 	if model_type == 'byt5':
 		tokenizer = ByT5Tokenizer()
 	else:
-		tokenizer = MyT5Tokenizer(decompose_map="byte_maps/decompose_map.json", merge_map="byte_maps/merge_map.json")
+		tokenizer = MyT5Tokenizer(decompose_map="../byte_maps/decompose_map.json", merge_map="../byte_maps/merge_map.json")
 	return model, tokenizer
 
 def get_flores_data(flores_dir, languages, split='devtest'):
@@ -124,22 +125,21 @@ def evaluate_texts(text_dataset, model, tokenizer, en_text_dataset=None, batch_s
 	torch.cuda.empty_cache()
 	return sentence_bpbs, sentence_compressions
 
-def create_dfs(res_dict, value_column='NLL'):
+def create_dfs(res_dict,model_name='', value_column='NLL'):
 	data_list = []
-	for model, model_vals in res_dict.items():
-		for lang, lang_vals in model_vals.items():
-			for val in lang_vals:
-				data_list.append([lang, model, val])
+	for lang, lang_vals in res_dict.items():
+		for val in lang_vals:
+			data_list.append([lang, model_name, val])
 	data_df = pd.DataFrame(data_list, columns=['Language', 'Model', value_column])
 	avg_df = data_df.groupby(['Language', 'Model'])[value_column].mean().reset_index()
 	return data_df, avg_df
 
 if __name__ == "__main__":
 	argparser = argparse.ArgumentParser()
-	argparser.add_argument("--languages", nargs="+", required=False, defaulf=ALL_AVAILABLE_LANGUAGES)
-	argparser.add_argument("--checkpoint_dir", required=False, default="../hf_checkpoints", type=str)
-	argparser.add_argument("--flores_dir", required=False, default="flores200_dataset", type=str)
-	argparser.add_argument("--results_dir", required=False, defulat="flores200_lm_results", type=str)
+	argparser.add_argument("--languages", nargs="+", required=False, default=ALL_AVAILABLE_LANGUAGES)
+	argparser.add_argument("--checkpoint_dir", required=False, default="../../hf_checkpoints", type=str)
+	argparser.add_argument("--flores_dir", required=False, default="../flores200_dataset", type=str)
+	argparser.add_argument("--results_dir", required=False, default="../flores200_lm_results", type=str)
 	argparser.add_argument("--model_type", required=True, type=str)
 	argparser.add_argument("--model_size", required=True, type=str)
 	argparser.add_argument("--model_steps", required=False, type=int, default=250000)
@@ -150,7 +150,7 @@ if __name__ == "__main__":
 	# load model + tokenizer
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-	model, tokenizer = get_model_tokenizer(args.model_type, args.model_steps, args.checkpoint_dir, device=device)
+	model, tokenizer = get_model_tokenizer(args.model_type,args.model_size, args.model_steps, args.checkpoint_dir, device=device)
 	flores = get_flores_data(args.flores_dir, args.languages, split='devtest')
 
 	bpbs = dict()
@@ -166,8 +166,8 @@ if __name__ == "__main__":
 		print_gpu_mem_usage()
 
 	# save results(nlls
-	bpbs_data, bpbs_avg = create_dfs(bpbs, "BPEB")
-	comp_data, comp_avg = create_dfs(comps, "Compressions")
+	bpbs_data, bpbs_avg = create_dfs(bpbs,f"{args.model_type}_{args.model_size}", "BPEB")
+	comp_data, comp_avg = create_dfs(comps,f"{args.model_type}_{args.model_size}", "Compressions")
 
 	experiment_name = ""
 	if args.model_steps != 250000:
@@ -175,11 +175,11 @@ if __name__ == "__main__":
 	if args.en_translation:
 		experiment_name += "_translate"
 
-	bpbs_data.to_tsv(f"{args.results_dir}/{args.model_type}_{args.model_size}{experiment_name}_bpeb.csv", index=False)
-	bpbs_avg.to_tsv(f"{args.results_dir}/{args.model_type}_{args.model_size}{experiment_name}_bpeb_avg.csv", index=False)
+	bpbs_data.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}{experiment_name}_bpeb.csv", index=False)
+	bpbs_avg.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}{experiment_name}_bpeb_avg.csv", index=False)
 
-	comp_data.to_tsv(f"{args.results_dir}/{args.model_type}_{args.model_size}_comp.csv", index=False)
-	comp_avg.to_tsv(f"{args.results_dir}/{args.model_type}_{args.model_size}_comp_avg.csv", index=False)
+	comp_data.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_comp.csv", index=False)
+	comp_avg.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_comp_avg.csv", index=False)
 
 
 

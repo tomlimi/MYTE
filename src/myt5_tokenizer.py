@@ -20,7 +20,7 @@ from typing import List, Optional, Tuple
 
 from transformers.tokenization_utils import AddedToken, PreTrainedTokenizer
 from transformers.utils import logging
-from .rewrite_bytes import ByteRewriter
+from rewrite_bytes import ByteRewriter
 
 
 logger = logging.get_logger(__name__)

@@ -1,7 +1,7 @@
 #! /bin/bash
 #SBATCH --job-name=flores-lm
-#SBATCH --output=slurm_output/flores-lm-%A-%a.log
-#SBATCH --error=slurm_output/flores-lm-%A-%a.log
+#SBATCH --output=slurm_output/flores-lm-%A.log
+#SBATCH --error=slurm_output/flores-lm-%A.log
 #SBATCH --account=zlab
 #SBATCH --gres=gpu:1
 #SBATCH--partition=gpu-a40
@@ -22,8 +22,8 @@ source ../../mseg/bin/activate
 if [ "$TRANSLATE" = 1 ]
 then
     echo "Translating"
-    python flores_modeling.py --model_type $MODEL_TYPE --model_size $MODEL_SIZE --model_steps $MODEL_STEPS --en_translation True
+    python flores_modeling.py --model_type $MODEL_TYPE --model_size $MODEL_SIZE --model_steps $MODEL_STEPS --en_translation
 else
     echo "Full language modeling"
-    pythob flores_modeling.py --model_type $MODEL_TYPE --model_size $MODEL_SIZE --model_steps $MODEL_STEPS
+    python flores_modeling.py --model_type $MODEL_TYPE --model_size $MODEL_SIZE --model_steps $MODEL_STEPS
 fi
