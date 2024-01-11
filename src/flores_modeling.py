@@ -9,6 +9,7 @@ import math
 import gc
 import argparse
 from pynvml import *
+import time
 
 from myt5_tokenizer import MyT5Tokenizer
 
@@ -64,6 +65,7 @@ def print_gpu_mem_usage():
 def evaluate_texts(text_dataset, model, tokenizer, en_text_dataset=None, batch_size=32, context=0, translation=False, device=torch.device("cuda:0")):
 	sentence_bpbs = []
 	sentence_compressions = []
+	sentence_inference_times = []
 	context = min(abs(context), 1.0)
 
 	for i in tqdm(range(0, len(text_dataset), batch_size)):
@@ -93,7 +95,14 @@ def evaluate_texts(text_dataset, model, tokenizer, en_text_dataset=None, batch_s
 			batch_suffixes, padding="longest", return_tensors="pt"
 		).to(device)
 
+		# compute runtime
+		torch.cuda.synchronize()
+		start = time.time()
+
 		outputs = model(**inputs, labels=targets.input_ids)
+
+		torch.cuda.synchronize()
+		end = time.time()
 
 		logits = outputs.logits
 		logits = torch.nn.functional.log_softmax(logits, dim=-1)
@@ -111,6 +120,7 @@ def evaluate_texts(text_dataset, model, tokenizer, en_text_dataset=None, batch_s
 		# print(outputs.loss * batch_compressions)
 		sentence_bpbs.extend(batch_bpbs.tolist())
 		sentence_compressions.extend(batch_compressions.tolist())
+		sentence_inference_times.extend([(end - start) / len(batch)] * len(batch))
 
 		del batch_bpbs
 		del byte_lengths
@@ -123,7 +133,7 @@ def evaluate_texts(text_dataset, model, tokenizer, en_text_dataset=None, batch_s
 
 	gc.collect()
 	torch.cuda.empty_cache()
-	return sentence_bpbs, sentence_compressions
+	return sentence_bpbs, sentence_compressions, sentence_inference_times
 
 def create_dfs(res_dict,model_name='', value_column='NLL'):
 	data_list = []
@@ -155,11 +165,12 @@ if __name__ == "__main__":
 
 	bpbs = dict()
 	comps = dict()
+	times = dict()
 
 	bs = 4 if args.model_size != 'large' else 2
 	for lang in args.languages:
 		print(f"Processing {lang}")
-		bpbs[lang], comps[lang] = evaluate_texts(flores[lang], model, tokenizer, flores['en'], batch_size=bs,
+		bpbs[lang], comps[lang], times[lang] = evaluate_texts(flores[lang], model, tokenizer, flores['en'], batch_size=bs,
 		                                         context=0, translation=args.en_translation, device=device)
 		print(f"BPB: {sum(bpbs[lang]) / len(bpbs[lang])}")
 		print(f"Compression: {sum(comps[lang]) / len(comps[lang])}")
@@ -168,6 +179,7 @@ if __name__ == "__main__":
 	# save results(nlls
 	bpbs_data, bpbs_avg = create_dfs(bpbs,f"{args.model_type}_{args.model_size}", "BPEB")
 	comp_data, comp_avg = create_dfs(comps,f"{args.model_type}_{args.model_size}", "Compressions")
+	times_data, times_avg = create_dfs(times,f"{args.model_type}_{args.model_size}", "Time")
 
 	experiment_name = ""
 	if args.model_steps != 250000:
@@ -180,6 +192,9 @@ if __name__ == "__main__":
 
 	comp_data.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_comp.csv", index=False)
 	comp_avg.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_comp_avg.csv", index=False)
+
+	times_data.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_times.csv", index=False)
+	times_avg.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_times_avg.csv", index=False)
 
 
 
