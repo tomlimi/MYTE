@@ -96,12 +96,14 @@ def evaluate_texts(text_dataset, model, tokenizer, en_text_dataset=None, batch_s
 		).to(device)
 
 		# compute runtime
-		torch.cuda.synchronize()
+		if device.type == "cuda":
+			torch.cuda.synchronize()
 		start = time.time()
 
 		outputs = model(**inputs, labels=targets.input_ids)
 
-		torch.cuda.synchronize()
+		if device.type == "cuda":
+			torch.cuda.synchronize()
 		end = time.time()
 
 		logits = outputs.logits
@@ -174,6 +176,7 @@ if __name__ == "__main__":
 		                                         context=0, translation=args.en_translation, device=device)
 		print(f"BPB: {sum(bpbs[lang]) / len(bpbs[lang])}")
 		print(f"Compression: {sum(comps[lang]) / len(comps[lang])}")
+		print(f"Time: {sum(times[lang]) / len(times[lang])}")
 		print_gpu_mem_usage()
 
 	# save results(nlls
