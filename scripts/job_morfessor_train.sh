@@ -9,7 +9,6 @@
 #SBATCH -c 2
 #SBATCH --mem=16G
 
-
 cd /gscratch/zlab/tomlim/mseg/fair_segmentation/src || exit
 source ../../mseg/bin/activate
 
