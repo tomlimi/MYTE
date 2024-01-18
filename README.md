@@ -29,3 +29,5 @@ probs = torch.nn.functional.oftmax(outputs.logits, dim=-1)
 ```
 
 Note that the only difference betwean usage in MyT5 and ByT5 models is the tokenizer.
+More documentation for ByT5 models on the HuggingFace model [page](https://huggingface.co/google/byt5-base).
+
