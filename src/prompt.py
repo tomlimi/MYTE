@@ -2,11 +2,13 @@
 # -*- coding: utf-8 -*- 
 
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig
-from transformers import T5ForConditionalGeneration, ByT5Tokenizer, MyT5Tokenizer
+from transformers import T5ForConditionalGeneration, ByT5Tokenizer
 # from accelerate import init_empty_weights, infer_auto_device_map, load_checkpoint_and_dispatch
 import torch
 import torch.nn.functional as F
 from datasets import load_dataset, DatasetDict
+
+from myt5_tokenizer import MyT5Tokenizer
 
 import argparse
 from tqdm import tqdm
@@ -83,14 +85,6 @@ def _create_example(example, task, label, eval_lang=None):
 	return (example_text0, example_text1)
 
 
-# def _fwd(model, input_ids, context_key_values, gpu_id=0):
-# 	with torch.no_grad():
-# 		input_ids = input_ids.to(torch.device("cuda:{}".format(gpu_id)))
-# 		output = model(input_ids, past_key_values=context_key_values, use_cache=True, return_dict=True)
-# 	logits = output['logits'].squeeze()
-# 	return logits.to("cpu")
-
-
 def score(model, tokenizer, input_text, context_ids=None):
 	scores = []
 
@@ -98,7 +92,7 @@ def score(model, tokenizer, input_text, context_ids=None):
 	shared_text = input_text[0][0]
 
 	shared_ids = tokenizer(shared_text, padding="longest", return_tensors="pt")['input_ids'].to("cuda:0")
-	if context_ids:
+	if context_ids is not None:
 		shared_ids = torch.cat([context_ids, shared_ids], dim=1)
 
 	# score example with each possible label
@@ -108,25 +102,10 @@ def score(model, tokenizer, input_text, context_ids=None):
 		labels[labels == tokenizer.pad_token_id] = -100
 
 		with torch.no_grad():
-			loss = model(**shared_ids, labels=labels).loss
+			loss = model(shared_ids, labels=labels).loss
 		scores.append(loss.item())
 
 	return scores
-
-
-# def _run_context(models, tokenizer, text, history=None):
-# 	if not history:
-# 		history = [None] * len(models)
-#
-# 	# tokenize input
-# 	input_ids = tokenizer(text, return_tensors='pt')['input_ids']
-# 	outputs = []
-# 	for i, (model, hist) in enumerate(list(zip(models, history))):
-# 		with torch.no_grad():
-# 			input_ids = input_ids.to(torch.device("cuda:{}".format(i)))
-# 			output = model(input_ids, return_dict=True, use_cache=True, past_key_values=hist)
-# 		outputs.append(output['past_key_values'])
-# 	return outputs
 
 
 def _calculate_acc(scores):
@@ -162,7 +141,7 @@ def main(args):
 		datapath = './northeurlex'
 
 	# load model
-	tokenizer, models = get_model_tokenizer(args.model_type, args.model_size, args.model_steps, args.checkpoint_dir, device=torch.device("cuda:0"))
+	models, tokenizer = get_model_tokenizer(args.model_type, args.model_size, args.model_steps, args.checkpoint_dir, device=torch.device("cuda:0"))
 
 	for eval_lang in args.eval_lang:
 
@@ -175,11 +154,6 @@ def main(args):
 		else:
 			data = load_dataset(eval_task, eval_lang, data_dir=datapath)[eval_split]
 
-		if args.tfidf_task_dir and args.tfidf_mode is not None:
-			cluster_probs = np.load(os.path.join(args.tfidf_task_dir, f"{eval_split}_{eval_lang}", 'cluster.npy'))
-			# add cluster probs to dataset
-			data = data.add_column('cluster_probs', cluster_probs.tolist())
-
 		data = data.shuffle(seed=args.rand_seed)
 		data = data.select(list(range(min(NUM_EVAL_EXAMPLES, len(data)))))
 
@@ -191,8 +165,7 @@ def main(args):
 				break
 
 			# skip run if we already have results saved
-			m = args.model_path[0].split('/')[-1]
-			scores_filepath = '{}.{}.k{}.eval_{}.run{}.pkl'.format(m, eval_task, args.k, eval_lang, run_id)
+			scores_filepath = '{}.{}.k{}.eval_{}.run{}.pkl'.format(args.model_type, eval_task, args.k, eval_lang, run_id)
 			scores_filepath = os.path.join(args.output_dir, scores_filepath)
 			if os.path.isfile(scores_filepath):
 				print('Skipping run {} of {}...'.format(run_id, NUM_RUNS))

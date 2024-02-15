@@ -12,7 +12,7 @@
 
 TASK=$1
 MODEL_TYPE=$2
-CROSS==${3:-""}
+CROSS=${3:-""}
 
 
 # INITIALIZE ENVIRONMENT
@@ -45,13 +45,13 @@ if [ "$CROSS" == "" ]; then
 
   # RUN EVALUATION
   echo "Running evaluation"
-  python3 xl-btm/downstream_eval/prompt.py --model_type ${MODEL_TYPE} --output_dir ${RESULTS} --task ${TASK} --eval_lang ${LANGUAGES[@]} --checkpoint_dir ${CHECKPOINT_DIR}
+  python3 prompt.py --model_type ${MODEL_TYPE} --output_dir ${RESULTS} --task ${TASK} --eval_lang ${LANGUAGES[@]} --checkpoint_dir ${CHECKPOINT_DIR}
 else
   RESULTS="${BASE_DIR}/results_ds/${MODEL_NAME}/"
   mkdir -p ${RESULTS}
   # RUN EVALUATION
   echo "Running evaluation with en demonstrations"
-  python3 xl-btm/downstream_eval/prompt.py --model_type ${MODEL_TYPE} --output_dir ${RESULTS} --task ${TASK} --eval_lang ${LANGUAGES[@]} --demo_lang "en" --k 8 --checkpoint_dir ${CHECKPOINT_DIR}
+  python3 prompt.py --model_type ${MODEL_TYPE} --output_dir ${RESULTS} --task ${TASK} --eval_lang ${LANGUAGES[@]} --demo_lang "en" --k 8 --checkpoint_dir ${CHECKPOINT_DIR}
 fi
 
 echo "Evaluation finished"
