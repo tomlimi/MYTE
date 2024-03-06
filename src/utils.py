@@ -12,9 +12,12 @@ def bytes_to_hex(bline: bytes, sep: str = ' ') -> str:
 def hex_to_str(bline: str, sep: str = ' ') -> str:
 	return str(binascii.unhexlify(bline.replace(sep, '')), "utf-8")
 
+def normalize_text(text, form='NFKC'):
+	return normalize(form, text)
+
 NUM_MORPH_CLUSTERS = 8
 
-# TODO: up for modifications / TRY 8 clusters and 
+
 script_clusters =\
 	{0: ['Latin'], # Latin
 	 1: ['Mixed', 'Common', 'Inherited', 'Unknown'], # Mixed and Special Scripts
@@ -33,7 +36,6 @@ script_clusters =\
 	      'Syloti_Nagri', 'Tagbanwa', 'Takri', 'Ugaritic', 'Vai'] # Other scipts
 	 }
 
-# TODO: check if there are updates in the standard
 script_data = {
 	"names":['Common', 'Latin', 'Greek', 'Cyrillic', 'Armenian', 'Hebrew', 'Arabic',
 	         'Syriac', 'Thaana', 'Devanagari', 'Bengali', 'Gurmukhi', 'Gujarati', 'Oriya',
