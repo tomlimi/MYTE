@@ -19,5 +19,5 @@ cd /gscratch/zlab/tomlim/mseg/fair_segmentation/src || exit
 source ../../mseg/bin/activate
 
 
-python ft_generative_tasl.py --task "translation" --directory "../flores200_translation/" \
+python ft_generative_task.py --task "translation" --directory "../flores200_translation" \
                              --model_type $MODEL_TYPE --model_size $MODEL_SIZE --model_steps $MODEL_STEPS

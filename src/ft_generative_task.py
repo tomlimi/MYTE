@@ -5,6 +5,7 @@ from accelerate import Accelerator
 import argparse
 import torch
 from functools import partial
+import os
 
 from flores_modeling import get_model_tokenizer, get_flores_data
 from utils import normalize_text
@@ -24,7 +25,7 @@ def preprocess_function(examples, tokenizer):
 
 	inputs = [ex for ex in examples["Text"]]
 
-	if "Expected" not in examples:
+	if "Expected" in examples:
 		targets = [ex for ex in examples["Expected"]]
 	else:
 		targets = [""] * len(examples["Text"])
@@ -170,12 +171,18 @@ if __name__ == "__main__":
 	args = argparser.parse_args()
 
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-	model, tokenizer = get_model_tokenizer(args.model_type, args.model_size, args.model_steps, args.checkpoint_dir, device=device)
+
+	fine_tune = True
+	if os.path.isdir(f"{args.checkpoint_dir}/{args.model_type}_{args.model_size}_{args.model_steps}_{args.task}") is True:
+		print("Fine-tuned model exists, loading for evaluation")
+		fine_tune = False
+	model, tokenizer = get_model_tokenizer(args.model_type, args.model_size, args.model_steps, args.checkpoint_dir, device=device, task=args.task)
 
 	train_loaders, eval_loader, test_loader = get_dataset(tokenizer, args.task, args.directory)
 
-	model = train_evaluate(model, train_loaders, eval_loader, lr=args.lr, patience=args.patience)
-	model.save_pretrained(f"{args.checkpoint_dir}/{args.model_type}_{args.model_size}_{args.task}")
+	if fine_tune:
+		model = train_evaluate(model, train_loaders, eval_loader, lr=args.lr, patience=args.patience)
+		model.save_pretrained(f"{args.checkpoint_dir}/{args.model_type}_{args.model_size}_{args.task}", use_safetensors=True)
 
 	infer(model, tokenizer, eval_loader, args.model_type, args.model_size, args.directory, split='dev')
 	infer(model, tokenizer, test_loader, args.model_type, args.model_size, args.directory, split='submission' if args.task == "spelling_correction" else 'devtest')

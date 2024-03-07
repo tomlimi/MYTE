@@ -18,5 +18,5 @@ MODEL_STEPS=250000
 cd /gscratch/zlab/tomlim/mseg/fair_segmentation/src || exit
 source ../../mseg/bin/activate
 
-python ft_generative_tasl.py --task "spelling_correction" --directory "../ml-olympiad-multilingual-spell-correction" \
+python ft_generative_task.py --task "spelling_correction" --directory "../ml-olympiad-multilingual-spell-correction" \
                              --model_type $MODEL_TYPE --model_size $MODEL_SIZE --model_steps $MODEL_STEPS --patience 1

@@ -22,10 +22,13 @@ FLORES_MAPPING = {'en': 'eng_Latn', 'ceb': 'ceb_Latn', 'de': 'deu_Latn', 'sv': '
                   'mt': 'mlt_Latn', 'lo': 'lao_Laoo', 'xh': 'xho_Latn', 'sm': 'smo_Latn', 'ny': 'nya_Latn', 'st': 'sot_Latn'}
 
 
-def get_model_tokenizer(model_type, model_size, model_steps, checkpoint_dir, device=torch.device("cuda:0"), dropout=0.):
-
-	model = T5ForConditionalGeneration.from_pretrained(f"{checkpoint_dir}/{model_type}_{model_size}_{model_steps}",
-	                                                   use_safetensors=True, dropout_rate=dropout)
+def get_model_tokenizer(model_type, model_size, model_steps, checkpoint_dir, task=None, device=torch.device("cuda:0"), dropout=0.):
+	# load fine-tuned model if available
+	if task is not None and os.path.isdir(f"{checkpoint_dir}/{model_type}_{model_size}_{model_steps}_{task}") is True:
+		model = T5ForConditionalGeneration.from_pretrained(f"{checkpoint_dir}/{model_type}_{model_size}_{model_steps}_{task}")
+	else:
+		model = T5ForConditionalGeneration.from_pretrained(f"{checkpoint_dir}/{model_type}_{model_size}_{model_steps}",
+		                                                   use_safetensors=True, dropout_rate=dropout)
 	model = model.to(device)
 	if model_type == 'byt5':
 		tokenizer = ByT5Tokenizer()
