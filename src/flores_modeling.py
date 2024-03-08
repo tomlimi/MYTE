@@ -9,7 +9,7 @@ from pynvml import *
 import time
 
 from myt5_tokenizer import MyT5Tokenizer
-from utils_modeling import get_model_tokenizer, get_flores_data, print_gpu_mem_usage
+from utils_modeling import get_model_tokenizer, get_flores_data, print_gpu_mem_usage, create_dfs
 
 nvmlInit()
 ALL_AVAILABLE_LANGUAGES = ['en', 'ceb', 'de', 'sv', 'fr', 'nl', 'ru', 'es', 'it', 'pl', 'ja', 'zh', 'uk', 'vi', 'ar', 'pt', 'fa', 'ca', 'sr',
@@ -95,16 +95,6 @@ def evaluate_texts(text_dataset, model, tokenizer, en_text_dataset=None, batch_s
 	gc.collect()
 	torch.cuda.empty_cache()
 	return sentence_bpbs, sentence_compressions, sentence_inference_times
-
-
-def create_dfs(res_dict,model_name='', value_column='NLL'):
-	data_list = []
-	for lang, lang_vals in res_dict.items():
-		for val in lang_vals:
-			data_list.append([lang, model_name, val])
-	data_df = pd.DataFrame(data_list, columns=['Language', 'Model', value_column])
-	avg_df = data_df.groupby(['Language', 'Model'])[value_column].mean().reset_index()
-	return data_df, avg_df
 
 
 if __name__ == "__main__":

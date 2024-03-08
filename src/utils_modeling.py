@@ -2,6 +2,7 @@ import transformers
 from transformers import ByT5Tokenizer, T5ForConditionalGeneration, T5Config
 from pynvml import *
 import torch
+import pandas as pd
 
 from myt5_tokenizer import MyT5Tokenizer
 
@@ -24,6 +25,7 @@ FLORES_MAPPING = {'en': 'eng_Latn', 'ceb': 'ceb_Latn', 'de': 'deu_Latn', 'sv': '
 
 def get_model_tokenizer(model_type, model_size, model_steps, checkpoint_dir, task=None, device=torch.device("cuda:0"), dropout=0.):
 	# load fine-tuned model if available
+
 	if task is not None and os.path.isdir(f"{checkpoint_dir}/{model_type}_{model_size}_{model_steps}_{task}") is True:
 		model = T5ForConditionalGeneration.from_pretrained(f"{checkpoint_dir}/{model_type}_{model_size}_{model_steps}_{task}")
 	else:
@@ -45,6 +47,16 @@ def get_flores_data(flores_dir, languages, split='devtest'):
 		with open(f'{flores_split_dir}/{FLORES_MAPPING[lang]}.{split}', 'r') as f:
 			flores[lang] = f.read().splitlines()
 	return flores
+
+
+def create_dfs(res_dict,model_name='', value_column='NLL'):
+	data_list = []
+	for lang, lang_vals in res_dict.items():
+		for val in lang_vals:
+			data_list.append([lang, model_name, val])
+	data_df = pd.DataFrame(data_list, columns=['Language', 'Model', value_column])
+	avg_df = data_df.groupby(['Language', 'Model'])[value_column].mean().reset_index()
+	return data_df, avg_df
 
 
 def print_gpu_mem_usage():
