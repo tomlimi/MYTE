@@ -12,8 +12,8 @@ from utils_modeling import get_model_tokenizer, print_gpu_mem_usage, create_dfs
 
 
 TASK_LANGUAGES = {
-	'translation': ['en_ta', 'en_te', 'en_el', 'en_hy', 'en_ru', 'en_kk', 'en_am', 'en_vi', 'en_ja', 'en_fr', 'en_sm',
-	                'en_st', 'en_ko', 'en_de', 'en_mt', 'en_pl', 'en_sn'],
+	'translation': ['en2ta', 'en2te', 'en2el', 'en2hy', 'en2ru', 'en2kk', 'en2am', 'en2vi', 'en2ja', 'en2fr', 'en2sm',
+	                'en2st', 'en2ko', 'en2de', 'en2mt', 'en2pl', 'en2sn'],
 	'qa_in_lang': ['ar', 'bn', 'en', 'fi', 'id', 'ko', 'ru', 'sw', 'te'],
 	'ner': ['am', 'bbj', 'bm', 'ee', 'ha', 'ig', 'lg', 'luo', 'mos', 'ny', 'pcm', 'rw', 'sn','sw','tn', 'tw', 'wo', 'xh', 'yo', 'zu'],
 	'semantic_parsing': ['am', 'be', 'bn', 'de', 'en', 'es', 'fi', 'fr', 'ha', 'hi', 'ja',
@@ -118,7 +118,7 @@ if __name__ == "__main__":
 	comps = dict()
 	times = dict()
 
-	bs = 2
+	bs = 1
 	for lang in TASK_LANGUAGES[args.task]:
 
 		print(f"Processing {args.task} inference in {lang}")
