@@ -12,8 +12,8 @@ from utils_modeling import get_model_tokenizer, print_gpu_mem_usage, create_dfs
 
 
 TASK_LANGUAGES = {
-	'translation': ['en2ta', 'en2te', 'en2el', 'en2hy', 'en2ru', 'en2kk', 'en2am', 'en2vi', 'en2ja', 'en2fr', 'en2sm',
-	                'en2st', 'en2ko', 'en2de', 'en2mt', 'en2pl', 'en2sn'],
+	'translation': ['en2ta', 'en2te', 'en2el', 'en2hy', 'en2ru', 'en2kk', 'en2am', 'en2vi', 'en2ja', 'en2fr',
+	                'en2ko', 'en2de', 'en2pl', 'en2sn'],
 	'qa_in_lang': ['ar', 'bn', 'en', 'fi', 'id', 'ko', 'ru', 'sw', 'te'],
 	'ner': ['am', 'bbj', 'bm', 'ee', 'ha', 'ig', 'lg', 'luo', 'mos', 'ny', 'pcm', 'rw', 'sn','sw','tn', 'tw', 'wo', 'xh', 'yo', 'zu'],
 	'semantic_parsing': ['am', 'be', 'bn', 'de', 'en', 'es', 'fi', 'fr', 'ha', 'hi', 'ja',
@@ -75,7 +75,7 @@ def stats_for_task(model, tokenizer, lang, task, dataset_directory, batch_size, 
 			torch.cuda.synchronize()
 		start = time.time()
 
-		_ = model(**inputs, labels=targets.input_ids)
+		# _ = model(**inputs, labels=targets.input_ids)
 
 		if device.type == "cuda":
 			torch.cuda.synchronize()
@@ -100,7 +100,7 @@ def stats_for_task(model, tokenizer, lang, task, dataset_directory, batch_size, 
 
 if __name__ == "__main__":
 	argparser = argparse.ArgumentParser()
-	argparser.add_argument("--checkpoint_dir", required=False, default="../../hf_checkpoints", type=str)
+	argparser.add_argument("--checkpoint_dir", required=False, default="../hf_checkpoints", type=str)
 	argparser.add_argument("--dataset_directory", required=False, default="../xtreme_up_v1.1_lower", type=str)
 	argparser.add_argument("--results_dir", required=False, default="../xtreme_up_results", type=str)
 
@@ -118,7 +118,7 @@ if __name__ == "__main__":
 	comps = dict()
 	times = dict()
 
-	bs = 1
+	bs = 32
 	for lang in TASK_LANGUAGES[args.task]:
 
 		print(f"Processing {args.task} inference in {lang}")
@@ -130,8 +130,8 @@ if __name__ == "__main__":
 	comp_data, comp_avg = create_dfs(comps,f"{args.model_type}_{args.model_size}", "Compressions")
 	times_data, times_avg = create_dfs(times,f"{args.model_type}_{args.model_size}", "Time")
 
-	comp_data.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_{args.task}_comp.csv", index=False)
-	comp_avg.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_{args.task}_comp_avg.csv", index=False)
+	comp_data.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_{args.task}_comp.csv", index=True)
+	comp_avg.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_{args.task}_comp_avg.csv", index=True)
 
-	times_data.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_{args.task}_times.csv", index=False)
-	times_avg.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_{args.task}_times_avg.csv", index=False)
+	times_data.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_{args.task}_times.csv", index=True)
+	times_avg.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_{args.task}_times_avg.csv", index=True)

@@ -144,11 +144,11 @@ if __name__ == "__main__":
 	bpbs_data.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}{experiment_name}_bpeb.csv", index=False)
 	bpbs_avg.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}{experiment_name}_bpeb_avg.csv", index=False)
 
-	comp_data.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_comp.csv", index=False)
-	comp_avg.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_comp_avg.csv", index=False)
+	comp_data.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_comp.csv", index=True)
+	comp_avg.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_comp_avg.csv", index=True)
 
-	times_data.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_times.csv", index=False)
-	times_avg.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_times_avg.csv", index=False)
+	times_data.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_times.csv", index=True)
+	times_avg.to_csv(f"{args.results_dir}/{args.model_type}_{args.model_size}_times_avg.csv", index=True)
 
 
 

@@ -22,6 +22,14 @@ FLORES_MAPPING = {'en': 'eng_Latn', 'ceb': 'ceb_Latn', 'de': 'deu_Latn', 'sv': '
                   'am': 'amh_Ethi', 'sn': 'sna_Latn', 'zu': 'zul_Latn', 'km': 'khm_Khmr', 'so': 'som_Latn', 'mi': 'mri_Latn',
                   'mt': 'mlt_Latn', 'lo': 'lao_Laoo', 'xh': 'xho_Latn', 'sm': 'smo_Latn', 'ny': 'nya_Latn', 'st': 'sot_Latn'}
 
+LOW_RES_LANGUAGES = frozenset([ 'af', 'bn', 'be', 'bg', 'bs', 'my', 'ceb', 'da', 'et', 'gl', 'ka', 'el', 'he', 'id', 'kk', 'lv',
+                                'lt', 'ms', 'pcm', 'ro', 'sk', 'sl', 'tl', 'ta', 'th', 'ug', 'uk', 'ur', 'uz', 'no', 'or', 'bho',
+                                'brx', 'gbm', 'gom', 'hne', 'mai', 'mni', 'mwr', 'ps', 'ta', 'ff', 'rw', 'mr', 'mt', 'fil', 'ku',
+                                'nb', 'oci', 'rup', 'sk', 'eu', 'sme', 'am', 'hy', 'as', 'ast', 'az', 'bm', 'bem', 'ber', 'my',
+                                'ckb', 'ee', 'fon', 'ful', 'bbj', 'gu', 'ha', 'is', 'ig', 'ga', 'jv', 'kea', 'kam', 'kn', 'km',
+                                'nw', 'ky', 'lo', 'ln', 'lij', 'olo', 'lg', 'luo', 'lb', 'mk', 'ml', 'mg', 'mi', 'mn', 'mos', 'nd',
+                                'ne', 'nso', 'se', 'ny', 'oc', 'om', 'ps', 'pa', 'sa', 'gd', 'tn', 'sn', 'si', 'sd', 'so', 'ckb',
+                                'st', 'ss', 'sw', 'tg', 'te', 'bo', 'ts', 'tw', 'umb', 'hsb', 've', 'cy', 'wo', 'xh', 'yo', 'zu'])
 
 def get_model_tokenizer(model_type, model_size, model_steps, checkpoint_dir, task=None, device=torch.device("cuda:0"), dropout=0.):
 	# load fine-tuned model if available
@@ -53,9 +61,16 @@ def create_dfs(res_dict,model_name='', value_column='NLL'):
 	data_list = []
 	for lang, lang_vals in res_dict.items():
 		for val in lang_vals:
-			data_list.append([lang, model_name, val])
-	data_df = pd.DataFrame(data_list, columns=['Language', 'Model', value_column])
-	avg_df = data_df.groupby(['Language', 'Model'])[value_column].mean().reset_index()
+			data_list.append([lang, val])
+	data_df = pd.DataFrame(data_list, columns=['Language', value_column])
+	avg_df = data_df.groupby(['Language'])[value_column].mean().reset_index()
+
+	# raname Language if its en2xx into xx (only in translation task)
+	avg_df['Language'] = avg_df['Language'].apply(lambda x: x.split('2')[-1])
+
+	avg_df.set_index('Language', inplace=True)
+	avg_df.loc['AVG'] = avg_df.mean()
+	avg_df.loc['AVG LR'] = avg_df[avg_df.index.isin(LOW_RES_LANGUAGES)].mean()
 	return data_df, avg_df
 
 
