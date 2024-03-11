@@ -57,7 +57,7 @@ def get_flores_data(flores_dir, languages, split='devtest'):
 	return flores
 
 
-def create_dfs(res_dict,model_name='', value_column='NLL'):
+def create_dfs(res_dict, model_name='', value_column='NLL'):
 	data_list = []
 	for lang, lang_vals in res_dict.items():
 		for val in lang_vals:

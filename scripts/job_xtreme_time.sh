@@ -18,7 +18,10 @@ MODEL_STEPS=250000
 cd /gscratch/zlab/tomlim/mseg/fair_segmentation/src || exit
 source ../../mseg/bin/activate
 
-for task in qa_in_lang translation semantic_parsing ner
+for MODEL_TYPE in myt5 byt5
 do
-  python xtreme_time.py --model_type $MODEL_TYPE --model_size $MODEL_SIZE --model_steps $MODEL_STEPS --task $task
+  for task in qa_in_lang translation semantic_parsing ner
+  do
+    python xtreme_time.py --model_type $MODEL_TYPE --model_size $MODEL_SIZE --model_steps $MODEL_STEPS --task $task
+  done
 done
