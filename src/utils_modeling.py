@@ -4,7 +4,7 @@ from pynvml import *
 import torch
 import pandas as pd
 
-from myt5_tokenizer import MyT5Tokenizer
+from myt5.myt5_tokenizer import MyT5Tokenizer
 
 
 FLORES_MAPPING = {'en': 'eng_Latn', 'ceb': 'ceb_Latn', 'de': 'deu_Latn', 'sv': 'swe_Latn', 'fr': 'fra_Latn', 'nl': 'nld_Latn', 'ru': 'rus_Cyrl', 'es': 'spa_Latn',

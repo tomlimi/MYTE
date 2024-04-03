@@ -8,7 +8,6 @@ import argparse
 from pynvml import *
 import time
 
-from myt5_tokenizer import MyT5Tokenizer
 from utils_modeling import get_model_tokenizer, get_flores_data, print_gpu_mem_usage, create_dfs
 
 nvmlInit()
