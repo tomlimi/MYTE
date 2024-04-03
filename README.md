@@ -9,7 +9,7 @@ For using tokenizer or and model install requirements from `requirements_myt5.tx
 
 Custo implementation of MYTE tokenizer is in `src/myt5/myt5_tokenizer.py`. 
 
-```
+```python
 from src.myt5.myt5_tokenizer import MyT5Tokenizer
 
 tokenizer = MyT5Tokenizer()
@@ -20,7 +20,7 @@ tokenized = tokenizer.tokenize("roughly at 12.")
 You may also use custom byte maps for byte decomposition and merging (e.g. of morphemes) 
 by providing custom merge and decompose maps.
 
-```
+```python
 from src.myt5.myt5_tokenizer import MyT5Tokenizer
 tokenizer = MyT5Tokenizer(decompose_map="byte_maps/decompose_map.json", merge_map="byte_maps/merge_map.json")
 ```
@@ -28,7 +28,7 @@ tokenizer = MyT5Tokenizer(decompose_map="byte_maps/decompose_map.json", merge_ma
 ### Model
 Instruction for basic generation with myte model (MyT5).
 
-```
+```python
 from transformers import T5ForConditionalGeneration
 from src.myt5.myt5_tokenizer import MyT5Tokenizer
 import torch
@@ -58,7 +58,8 @@ More documentation for ByT5 models on the HuggingFace model [page](https://huggi
 ## Citation
 
 The code is associated with the [paper](https://arxiv.org/pdf/2403.10691.pdf):
-```
+
+```bibtex
 @misc{limisiewicz2024myte,
       title={MYTE: Morphology-Driven Byte Encoding for Better and Fairer Multilingual Language Modeling}, 
       author={Tomasz Limisiewicz and Terra Blevins and Hila Gonen and Orevaoghene Ahia and Luke Zettlemoyer},
