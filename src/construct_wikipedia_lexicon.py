@@ -1,15 +1,12 @@
 import argparse
 import codecs
-import re
 from collections import defaultdict
 from datasets import load_dataset
 from datasets.arrow_reader import DatasetNotOnHfGcsError
 import nltk
-import psutil
-from torch.utils.data import DataLoader
 
 from rewrite_bytes import ByteRewriter
-from utils import hex_to_str, str_to_hex, bytes_to_hex
+from utils import  str_to_hex
 from tqdm import tqdm
 
 
