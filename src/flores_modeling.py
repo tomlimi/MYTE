@@ -8,7 +8,7 @@ import argparse
 from pynvml import *
 import time
 
-from utils_modeling import get_model_tokenizer, get_flores_data, print_gpu_mem_usage, create_dfs
+from utils_modeling import get_model_tokenizer, get_flores_data, print_gpu_mem_usage
 
 nvmlInit()
 ALL_AVAILABLE_LANGUAGES = ['en', 'ceb', 'de', 'sv', 'fr', 'nl', 'ru', 'es', 'it', 'pl', 'ja', 'zh', 'uk', 'vi', 'ar', 'pt', 'fa', 'ca', 'sr',
@@ -18,6 +18,15 @@ ALL_AVAILABLE_LANGUAGES = ['en', 'ceb', 'de', 'sv', 'fr', 'nl', 'ru', 'es', 'it'
             'kn', 'gu', 'mn', 'ig', 'si', 'ps', 'gd', 'sd', 'yi', 'am', 'sn', 'zu', 'km', 'so', 'mi', 'mt', 'lo',
             'xh', 'sm', 'ny', 'st']
 
+
+def create_dfs(res_dict, model_name='', value_column='NLL'):
+	data_list = []
+	for lang, lang_vals in res_dict.items():
+		for val in lang_vals:
+			data_list.append([lang, model_name, val])
+	data_df = pd.DataFrame(data_list, columns=['Language', 'Model', value_column])
+	avg_df = data_df.groupby(['Language', 'Model'])[value_column].mean().reset_index()
+	return data_df, avg_df
 
 
 def evaluate_texts(text_dataset, model, tokenizer, en_text_dataset=None, batch_size=32, context=0, translation=False, device=torch.device("cuda:0")):
