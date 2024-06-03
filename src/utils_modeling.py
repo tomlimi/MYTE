@@ -20,7 +20,9 @@ FLORES_MAPPING = {'en': 'eng_Latn', 'ceb': 'ceb_Latn', 'de': 'deu_Latn', 'sv': '
                   'fy': 'fao_Latn', 'pa': 'pan_Guru', 'yo': 'yor_Latn', 'ne': 'npi_Deva', 'ha': 'hau_Latn', 'kn': 'kan_Knda', 'gu': 'guj_Gujr',
                   'mn': 'khk_Cyrl', 'ig': 'ibo_Latn', 'si': 'sin_Sinh', 'ps': 'pbt_Arab', 'gd': 'gla_Latn', 'sd': 'snd_Arab', 'yi': 'ydd_Hebr',
                   'am': 'amh_Ethi', 'sn': 'sna_Latn', 'zu': 'zul_Latn', 'km': 'khm_Khmr', 'so': 'som_Latn', 'mi': 'mri_Latn',
-                  'mt': 'mlt_Latn', 'lo': 'lao_Laoo', 'xh': 'xho_Latn', 'sm': 'smo_Latn', 'ny': 'nya_Latn', 'st': 'sot_Latn'}
+                  'mt': 'mlt_Latn', 'lo': 'lao_Laoo', 'xh': 'xho_Latn', 'sm': 'smo_Latn', 'ny': 'nya_Latn', 'st': 'sot_Latn',
+                  'ast': 'ast_Latn', 'war': 'war_Latn', 'aeb': 'aeb_Arab', 'sa': 'san_Deva', 'sal': 'sat_Olck'}
+
 
 LOW_RES_LANGUAGES = frozenset([ 'af', 'bn', 'be', 'bg', 'bs', 'my', 'ceb', 'da', 'et', 'gl', 'ka', 'el', 'he', 'id', 'kk', 'lv',
                                 'lt', 'ms', 'pcm', 'ro', 'sk', 'sl', 'tl', 'ta', 'th', 'ug', 'uk', 'ur', 'uz', 'no', 'or', 'bho',
@@ -29,7 +31,8 @@ LOW_RES_LANGUAGES = frozenset([ 'af', 'bn', 'be', 'bg', 'bs', 'my', 'ceb', 'da',
                                 'ckb', 'ee', 'fon', 'ful', 'bbj', 'gu', 'ha', 'is', 'ig', 'ga', 'jv', 'kea', 'kam', 'kn', 'km',
                                 'nw', 'ky', 'lo', 'ln', 'lij', 'olo', 'lg', 'luo', 'lb', 'mk', 'ml', 'mg', 'mi', 'mn', 'mos', 'nd',
                                 'ne', 'nso', 'se', 'ny', 'oc', 'om', 'ps', 'pa', 'sa', 'gd', 'tn', 'sn', 'si', 'sd', 'so', 'ckb',
-                                'st', 'ss', 'sw', 'tg', 'te', 'bo', 'ts', 'tw', 'umb', 'hsb', 've', 'cy', 'wo', 'xh', 'yo', 'zu'])
+                                'st', 'ss', 'sw', 'tg', 'te', 'bo', 'ts', 'tw', 'umb', 'hsb', 've', 'cy', 'wo', 'xh', 'yo', 'zu',
+                                'ast', 'war', 'aeb', 'sa', 'sal'])
 
 def get_model_tokenizer(model_type, model_size, model_steps, checkpoint_dir, task=None, device=torch.device("cuda:0"), dropout=0.):
 	# load fine-tuned model if available
