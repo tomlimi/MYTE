@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2021 T5 Authors and HuggingFace Inc. team.
+# Copyright 2024
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" Tokenization class for model ByT5."""
+""" Tokenization class for model MyT5."""
 
 
 import warnings
@@ -41,8 +41,8 @@ class ByteRewriter:
             raise ValueError(f"rewriting_rules should be either a path to json file or a dict, got {type(rewriting_rules)}")
 
         self.hash_tree = self.construct_hash_tree(rewriting_rules)
-        revese_revrewriting_rules = {v:k for k,v in rewriting_rules.items()}
-        self.reverse_hash_tree = self.construct_hash_tree(revese_revrewriting_rules)
+        reverse_rewriting_rules = {v:k for k,v in rewriting_rules.items()}
+        self.reverse_hash_tree = self.construct_hash_tree(reverse_rewriting_rules)
 
     def add_leaf(self,hash_tree, byte_in_sequence, byte_out_sequence):
 
@@ -57,14 +57,14 @@ class ByteRewriter:
 
         tree_pointer[self.LEAF] = byte_out_list
 
-    def construct_hash_tree(self, rewritting_rules):
+    def construct_hash_tree(self, rewriting_rules):
 
         hash_tree = defaultdict(dict)
         for b in (f"{x:02x}" for x in range(256)):
             hash_tree[b][self.LEAF] = [b]
 
-        for in_seequence, out_sequence in rewritting_rules.items():
-            self.add_leaf(hash_tree, in_seequence, out_sequence)
+        for in_sequence, out_sequence in rewriting_rules.items():
+            self.add_leaf(hash_tree, in_sequence, out_sequence)
 
         return hash_tree
 
@@ -78,7 +78,6 @@ class ByteRewriter:
                 return None
 
         return tree_pointer[self.LEAF]
-
 
     def rewrite_bytes(self, in_bytes, reverse=False):
 
@@ -136,8 +135,8 @@ class MyT5Tokenizer(PreTrainedTokenizer):
 
     model_input_names = ["input_ids", "attention_mask"]
 
-    MERGE_MAP = "byte_maps/merge_map.json"
-    DECOMPOSE_MAP = "byte_maps/decompose_map.json"
+    MERGE_MAP = os.path.join(os.path.dirname(__file__), "byte_maps/merge_map.json")
+    DECOMPOSE_MAP = os.path.join(os.path.dirname(__file__), "byte_maps/decompose_pre.txt")
 
     def __init__(
             self,
@@ -164,7 +163,6 @@ class MyT5Tokenizer(PreTrainedTokenizer):
                 )
 
         pad_token = AddedToken(pad_token, lstrip=True, rstrip=True) if isinstance(pad_token, str) else pad_token
-        # we force left and right stripping for backward compatibility. The byt5tests depend on this.
         eos_token = AddedToken(eos_token, lstrip=True, rstrip=True) if isinstance(eos_token, str) else eos_token
         unk_token = AddedToken(unk_token, lstrip=True, rstrip=True) if isinstance(unk_token, str) else unk_token
         # unk token needs to be in the vocab with correct index
@@ -180,7 +178,7 @@ class MyT5Tokenizer(PreTrainedTokenizer):
             unk_token=unk_token,
             pad_token=pad_token,
             extra_ids=0,
-            additional_special_tokens=additional_special_tokens,  # TODO extra ids are not used :sweatywmile:
+            additional_special_tokens=additional_special_tokens,
             **kwargs,
         )
 
@@ -314,7 +312,6 @@ class MyT5Tokenizer(PreTrainedTokenizer):
         indices = self.merge_rewriter.rewrite_bytes(indices, reverse=True)
         indices = self.decompose_rewriter.rewrite_bytes(indices, reverse=True)
         return indices
-
 
     def convert_tokens_to_string(self, tokens):
         """Converts a sequence of tokens (string) in a single string."""
