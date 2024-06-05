@@ -7,9 +7,10 @@ import time
 from myt5.myt5_tokenizer import MyT5Tokenizer
 from transformers import AutoTokenizer
 
+
 class TestTokenizer(unittest.TestCase):
 
-	tokenizer = MyT5Tokenizer(decompose_map="../byte_maps/decompose_map.json", merge_map="../byte_maps/merge_map.json")
+	tokenizer = MyT5Tokenizer()
 	ref_tokenizer = AutoTokenizer.from_pretrained("google/mt5-small", use_fast=False)
 
 	def test_simple_tokenize(self):

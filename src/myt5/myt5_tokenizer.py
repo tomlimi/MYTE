@@ -136,7 +136,7 @@ class MyT5Tokenizer(PreTrainedTokenizer):
     model_input_names = ["input_ids", "attention_mask"]
 
     MERGE_MAP = os.path.join(os.path.dirname(__file__), "byte_maps/merge_map.json")
-    DECOMPOSE_MAP = os.path.join(os.path.dirname(__file__), "byte_maps/decompose_pre.txt")
+    DECOMPOSE_MAP = os.path.join(os.path.dirname(__file__), "byte_maps/decompose_map.json")
 
     def __init__(
             self,

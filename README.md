@@ -48,7 +48,7 @@ targets = tokenizer(post_texts, padding="longest", return_tensors="pt")
 
 
 outputs = model(**inputs, labels=targets.input_ids)
-probs = torch.nn.functional.oftmax(outputs.logits, dim=-1)
+probs = torch.nn.functional.softmax(outputs.logits, dim=-1)
 
 ```
 
