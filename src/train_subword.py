@@ -12,7 +12,7 @@ from tokenizers import (
 )
 from transformers import PreTrainedTokenizerFast
 
-from utils import hex_to_str, str_to_hex
+from .utils import hex_to_str, str_to_hex
 
 
 def build_gpt_tokenizer(data_path, vocab_sizes):
